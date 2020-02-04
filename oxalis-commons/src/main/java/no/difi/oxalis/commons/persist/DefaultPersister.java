@@ -64,7 +64,10 @@ public class DefaultPersister implements PersisterHandler {
     @Override
     public Path persist(TransmissionIdentifier transmissionIdentifier, Header header, InputStream inputStream)
             throws IOException {
-        Path path = PersisterUtils.createArtifactFolders(inboundFolder, header).resolve(
+        /*Path path = PersisterUtils.createArtifactFolders(inboundFolder, header).resolve(
+                String.format("%s.doc.xml", FileUtils.filterString(transmissionIdentifier.getIdentifier())));*/
+        
+        Path path = inboundFolder.resolve(
                 String.format("%s.doc.xml", FileUtils.filterString(transmissionIdentifier.getIdentifier())));
 
         try (OutputStream outputStream = Files.newOutputStream(path)) {
@@ -78,9 +81,12 @@ public class DefaultPersister implements PersisterHandler {
 
     @Override
     public void persist(InboundMetadata inboundMetadata, Path payloadPath) throws IOException {
-        Path path = PersisterUtils.createArtifactFolders(inboundFolder, inboundMetadata.getHeader()).resolve(
+        /*Path path = PersisterUtils.createArtifactFolders(inboundFolder, inboundMetadata.getHeader()).resolve(
                 String.format("%s.receipt.dat",
-                        FileUtils.filterString(inboundMetadata.getTransmissionIdentifier().getIdentifier())));
+                        FileUtils.filterString(inboundMetadata.getTransmissionIdentifier().getIdentifier())));*/
+
+        Path path = inboundFolder.resolve(
+                String.format("%s.receipt.dat", FileUtils.filterString(inboundMetadata.getTransmissionIdentifier().getIdentifier())));
 
         try (OutputStream outputStream = Files.newOutputStream(path)) {
             evidenceFactory.write(outputStream, inboundMetadata);

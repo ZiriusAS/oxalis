@@ -1,0 +1,24 @@
+<jaxb:bindings version="2.1" 
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc" 
+    jaxb:extensionBindingPrefixes="xjc">
+
+    <jaxb:globalBindings typesafeEnumMaxMembers="2000">
+        <xjc:simple />
+    </jaxb:globalBindings>
+    <jaxb:bindings schemaLocation="../common/UBL-CommonAggregateComponents-2.0.xsd">
+        <jaxb:schemaBindings>
+            <jaxb:nameXmlTransform>
+                <jaxb:elementName suffix="CommonAggregate" />
+            </jaxb:nameXmlTransform>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+    <jaxb:bindings schemaLocation="../common/UBL-CommonBasicComponents-2.0.xsd">
+        <jaxb:schemaBindings>
+            <jaxb:nameXmlTransform>
+                <jaxb:elementName suffix="CommonBasic" />
+            </jaxb:nameXmlTransform>
+        </jaxb:schemaBindings>
+    </jaxb:bindings>
+</jaxb:bindings>

@@ -1,0 +1,14 @@
+<jaxb:bindings version="2.1" xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc" jaxb:extensionBindingPrefixes="xjc">
+
+    <jaxb:globalBindings typesafeEnumMaxMembers="2000" typesafeEnumMemberName="generateName">
+        <xjc:simple />
+    </jaxb:globalBindings>
+
+    <jaxb:bindings schemaLocation="CodeList_UnitCode_UNECE_7_04.xsd">
+        <jaxb:bindings node="//xs:simpleType">
+            <jaxb:typesafeEnumClass name="UnitCodeContentType" />
+        </jaxb:bindings>
+    </jaxb:bindings>
+
+</jaxb:bindings>

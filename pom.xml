@@ -55,6 +55,8 @@
         <module>oxalis-legacy/oxalis-persistence</module>
         <module>oxalis-legacy/oxalis-document-sniffer</module>
         <module>oxalis-extension</module>
+		<module>oxalis-client</module>
+        <module>oxalis-service</module>
     </modules>
 
     <properties>
@@ -161,7 +163,11 @@
                 <version>4.1.1-SNAPSHOT</version>
                 <classifier>classes</classifier>
             </dependency>
-
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>oxalis-client</artifactId>
+				<version>4.1.1-SNAPSHOT</version>
+			</dependency>
             <!-- Logging -->
             <dependency>
                 <groupId>org.slf4j</groupId>

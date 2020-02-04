@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns11:OrderResponse xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:ns4="urn:oasis:names:specification:ubl:schema:xsd:Order-2" xmlns:ns5="urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2" xmlns:ns6="http://www.w3.org/2000/09/xmldsig#" xmlns:ns7="http://uri.etsi.org/01903/v1.3.2#" xmlns:ns8="urn:oasis:names:specification:ubl:schema:xsd:SignatureAggregateComponents-2" xmlns:ns9="urn:oasis:names:specification:ubl:schema:xsd:CommonSignatureComponents-2" xmlns:ns10="http://uri.etsi.org/01903/v1.4.1#" xmlns:ns11="urn:oasis:names:specification:ubl:schema:xsd:OrderResponse-2">
+    <cbc:UBLVersionID>2.0</cbc:UBLVersionID>
+    <cbc:CustomizationID>urn:www.cenbii.eu:transaction:biicoretrdm010:ver1.0:#urn:www.peppol.eu:bis:peppol4a:ver1.0#urn:www.difi.no:ehf:faktura:ver2.0</cbc:CustomizationID>
+    <cbc:ProfileID>urn:www.cenbii.eu:profile:bii04:ver1.0</cbc:ProfileID>
+    <cbc:ID>TOSL108</cbc:ID>
+    <cbc:IssueDate>2013-10-25</cbc:IssueDate>
+    <cbc:OrderResponseCode listID="UNCL1225">NOK</cbc:OrderResponseCode>
+    <cac:OrderReference>
+        <cbc:ID>TOSL108</cbc:ID>
+    </cac:OrderReference>
+    <cac:SellerSupplierParty>
+        <cac:Party>
+            <cbc:EndpointID schemeID="NO:ORGNR">1234567890123</cbc:EndpointID>
+            <cac:PartyIdentification>
+                <cbc:ID>Supp123</cbc:ID>
+            </cac:PartyIdentification>
+            <cac:PartyName>
+                <cbc:Name>Leverandar</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+                <cbc:Postbox>Postboks 123</cbc:Postbox>
+                <cbc:StreetName>Oslogate</cbc:StreetName>
+                <cbc:BuildingNumber>1</cbc:BuildingNumber>
+                <cbc:CityName>Oslo</cbc:CityName>
+                <cbc:PostalZone>0612</cbc:PostalZone>
+                <cbc:CountrySubentityCode>Norway</cbc:CountrySubentityCode>
+                <cac:Country>
+                    <cbc:IdentificationCode listID="ISO3166-1:Alpha2" listAgencyID="6">NO</cbc:IdentificationCode>
+                </cac:Country>
+            </cac:PostalAddress>
+            <cac:PartyLegalEntity>
+                <cbc:CompanyID schemeID="NO:ORGNR" schemeName="Foretaksregisteret" schemeAgencyID="82">999999999</cbc:CompanyID>
+                <cac:RegistrationAddress>
+                    <cbc:CityName>Oslo</cbc:CityName>
+                    <cbc:CountrySubentityCode>Norway</cbc:CountrySubentityCode>
+                    <cac:Country>
+                        <cbc:IdentificationCode listID="ISO3166-1:Alpha2" listAgencyID="6">NO</cbc:IdentificationCode>
+                    </cac:Country>
+                </cac:RegistrationAddress>
+            </cac:PartyLegalEntity>
+            <cac:Contact>
+                <cbc:ID>O Hansen</cbc:ID>
+                <cbc:Telephone>4793433770</cbc:Telephone>
+                <cbc:Telefax>4793433660</cbc:Telefax>
+                <cbc:ElectronicMail>bbx@bbx.com</cbc:ElectronicMail>
+            </cac:Contact>
+        </cac:Party>
+    </cac:SellerSupplierParty>
+    <cac:BuyerCustomerParty>
+        <cac:Party>
+            <cbc:EndpointID schemeID="NO:ORGNR">1234567987654</cbc:EndpointID>
+            <cac:PartyIdentification>
+                <cbc:ID>Cus123</cbc:ID>
+            </cac:PartyIdentification>
+            <cac:PartyName>
+                <cbc:Name>Kjaper</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+                <cbc:Postbox>Postboks 11</cbc:Postbox>
+                <cbc:StreetName>Testveien</cbc:StreetName>
+                <cbc:BuildingNumber>1</cbc:BuildingNumber>
+                <cbc:CityName>Frogner</cbc:CityName>
+                <cbc:PostalZone>2012</cbc:PostalZone>
+                <cac:Country>
+                    <cbc:IdentificationCode listID="ISO3166-1:Alpha2" listAgencyID="6">NO</cbc:IdentificationCode>
+                </cac:Country>
+            </cac:PostalAddress>
+            <cac:PartyLegalEntity>
+                <cac:RegistrationAddress>
+                    <cbc:CityName>Frogner</cbc:CityName>
+                    <cac:Country>
+                        <cbc:IdentificationCode listID="ISO3166-1:Alpha2" listAgencyID="6">NO</cbc:IdentificationCode>
+                    </cac:Country>
+                </cac:RegistrationAddress>
+            </cac:PartyLegalEntity>
+            <cac:Contact>
+                <cbc:ID>3150bdn</cbc:ID>
+                <cbc:Telephone>4793433770</cbc:Telephone>
+                <cbc:Telefax>4793433660</cbc:Telefax>
+                <cbc:ElectronicMail>bbx@bbx.com</cbc:ElectronicMail>
+            </cac:Contact>
+        </cac:Party>
+    </cac:BuyerCustomerParty>
+</ns11:OrderResponse>

@@ -1,0 +1,84 @@
+<jaxb:bindings version="2.1"
+	xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+	jaxb:extensionBindingPrefixes="xjc">
+
+	<jaxb:globalBindings typesafeEnumMaxMembers="2000">
+		<xjc:simple />
+	</jaxb:globalBindings>
+	<jaxb:bindings schemaLocation="../common/UBL-UnqualifiedDataTypes-2.1.xsd">
+		<jaxb:bindings node="//xs:complexType[@name='IdentifierType']">
+			<jaxb:class name="IdentifierTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='CodeType']">
+			<jaxb:class name="CodeTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='NumericType']">
+			<jaxb:class name="NumericTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='AmountType']">
+			<jaxb:class name="AmountTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='MeasureType']">
+			<jaxb:class name="MeasureTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='QuantityType']">
+			<jaxb:class name="QuantityTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='BinaryObjectType']">
+			<jaxb:class name="BinaryObjectTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='DateTimeType']">
+			<jaxb:class name="DateTimeTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='IndicatorType']">
+			<jaxb:class name="IndicatorTypeUnqualified">
+			</jaxb:class>
+		</jaxb:bindings>
+	</jaxb:bindings>
+	<jaxb:bindings schemaLocation="../common/CCTS_CCT_SchemaModule-2.1.xsd">
+		<jaxb:bindings node="//xs:complexType[@name='TextType']">
+			<jaxb:class name="TextTypeSchemaModule">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='IdentifierType']">
+			<jaxb:class name="IdentifierTypeSchemaModule">
+			</jaxb:class>
+		</jaxb:bindings>
+	</jaxb:bindings>
+	<jaxb:bindings schemaLocation="../common/UBL-CommonAggregateComponents-2.1.xsd">
+		<jaxb:schemaBindings>
+			<jaxb:nameXmlTransform>
+				<jaxb:elementName suffix="CommonAggregate" />
+			</jaxb:nameXmlTransform>
+		</jaxb:schemaBindings>
+		<jaxb:bindings node="//xs:complexType[@name='PartyType']">
+			<jaxb:class name="PartyTypeCommonAggregate">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='ContractType']">
+			<jaxb:class name="ContractTypeCommonAggregate">
+			</jaxb:class>
+		</jaxb:bindings>
+		<jaxb:bindings node="//xs:complexType[@name='PriceType']">
+			<jaxb:class name="PriceTypeCommonAggregate">
+			</jaxb:class>
+		</jaxb:bindings>
+	</jaxb:bindings>
+	<jaxb:bindings schemaLocation="../common/UBL-CommonBasicComponents-2.1.xsd">
+		<jaxb:schemaBindings>
+			<jaxb:nameXmlTransform>
+				<jaxb:elementName suffix="CommonBasic" />
+			</jaxb:nameXmlTransform>
+		</jaxb:schemaBindings>
+	</jaxb:bindings>
+</jaxb:bindings>
