@@ -89,6 +89,11 @@ public enum EHFConstants {
     
     EHF_THREE_DOT_ZERO_INVOICE("urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1"),
     EHF_THREE_DOT_ZERO_CREDIT_NOTE("urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2::CreditNote##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1"),
+    EHF_THREE_DOT_ZERO_ORDER(""),
+    EHF_THREE_DOT_ZERO_ORDER_RESPONSE(""),
+    
+    EHF_THREE_DOT_ZERO_ORDER_CUSTOMIZATION_ID(""),
+    EHF_THREE_DOT_ZERO_ORDER_RESPONSE_CUSTOMIZATION_ID(""),
 
     EHF_THREE_DOT_ZERO_CUSTOMIZATION_ID("urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"),
     EHF_THREE_DOT_ZERO_PROFILE_ID("urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"),

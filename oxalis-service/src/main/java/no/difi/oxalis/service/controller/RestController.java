@@ -67,6 +67,46 @@ public class RestController extends BaseController {
         
     }
     
+    @POST
+    @Path("/sendEHFV3Order")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response send(@Context SecurityContext sc, byte[] data) {
+
+        try {
+            DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
+            String userId = sc.getUserPrincipal().getName();
+            String result = service.sendDocument(documentDTO, userId, false);
+            
+            byte[] reponse = respond(result);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to send file: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+        
+    }
+    
+    @POST
+    @Path("/sendEHFV3OrderResponse")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response send(@Context SecurityContext sc, byte[] data) {
+
+        try {
+            DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
+            String userId = sc.getUserPrincipal().getName();
+            String result = service.sendDocument(documentDTO, userId, false);
+            
+            byte[] reponse = respond(result);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to send file: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+        
+    }
+    
     @GET
     @Path("/getMessageInfo/{messageId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -246,6 +286,60 @@ public class RestController extends BaseController {
             String participantId = (String) getObjectFromStream(data); 
             Log.info("Get Accesspoint Details for participant id if EHFV3 enabled: " + participantId);
             Endpoint endpoint = service.getEHFV3CreditNoteEndPoint(participantId, null);
+            String endPointData = "";
+            if (endpoint != null) {
+                String[] endpointArray = endpoint.toString().split(",");
+                endPointData = endpointArray[1] + "," + endpointArray[0] + "," + endpointArray[3];
+            } else {
+                throw new Exception("For Participant " + participantId + ": Accesspoint Details not found/EHFV3 CreditNote not enabled");
+            }
+            
+            byte[] reponse = respond(endPointData);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to get Accesspoint Details: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+    }
+    
+    @POST
+    @Path("/getEHFV3OrderEndPoint")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getEHFV3OrderEndPoint(byte[] data) {
+        
+        try {
+            
+            String participantId = (String) getObjectFromStream(data); 
+            Log.info("Get Accesspoint Details for participant id if EHFV3 enabled: " + participantId);
+            Endpoint endpoint = service.getEHFV3OrderEndPoint(participantId, null);
+            String endPointData = "";
+            if (endpoint != null) {
+                String[] endpointArray = endpoint.toString().split(",");
+                endPointData = endpointArray[1] + "," + endpointArray[0] + "," + endpointArray[3];
+            } else {
+                throw new Exception("For Participant " + participantId + ": Accesspoint Details not found/EHFV3 CreditNote not enabled");
+            }
+            
+            byte[] reponse = respond(endPointData);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to get Accesspoint Details: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+    }
+    
+    @POST
+    @Path("/getEHFV3OrderResponseEndPoint")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getEHFV3OrderResponseEndPoint(byte[] data) {
+        
+        try {
+            
+            String participantId = (String) getObjectFromStream(data); 
+            Log.info("Get Accesspoint Details for participant id if EHFV3 enabled: " + participantId);
+            Endpoint endpoint = service.getEHFV3OrderResponseEndPoint(participantId, null);
             String endPointData = "";
             if (endpoint != null) {
                 String[] endpointArray = endpoint.toString().split(",");

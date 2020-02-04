@@ -61,6 +61,8 @@ public final class AccessPointClient {
     private static final String METHOD_SEND = "send";
     private static final String METHOD_SEND_ORDER = "sendOrder";
     private static final String METHOD_SEND_ORDER_RESPONSE = "sendOrderResponse";
+    private static final String METHOD_SEND_EHFV3_ORDER = "sendEHFV3Order";
+    private static final String METHOD_SEND_EHFV3_ORDER_RESPONSE = "sendEHFV3OrderResponse";
     private static final String METHOD_RECEIVE = "receive";
     private static final String METHOD_RECEIVE_MESSAGE_ID = "receiveMessageId";
     private static final String METHOD_RECEIVE_UN_READ_MESSAGE_ID_FOR_WEB = "receiveUnReadMessageIdForWeb";
@@ -78,6 +80,8 @@ public final class AccessPointClient {
     private static final String METHOD_GET_ACCESSPOINT_DETAILS = "getAccesspointDetails";
     private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_INVOICE = "getEHFV3InvoiceEndPoint";
     private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_CREDITNOTE = "getEHFV3CreditNoteEndPoint";
+        private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_ORDER = "getEHFV3OrderEndPoint";
+    private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_ORDER_RESPONSE = "getEHFV3OrderResponseEndPoint";
     private static final String EXCEPTION_STRING = "Exception from EHF Server :";
     private static String ACCESSPOINT_URL = "";
     private static String USERNAME = "";
@@ -893,6 +897,92 @@ public final class AccessPointClient {
     }
 
     /**
+     * Get the access point details if EHFV3 Order is enabled
+     * 
+     * @param participantId
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception 
+     */
+    public static AccesspointDetails getEHFV3OrderEndPoint(String participantId, String userName, String password) throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_ORDER);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(participantId), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+
+            int status = httpClient.executeMethod(httpPost);
+            if (status == HttpStatus.SC_OK) {
+
+                String endpointData = httpPost.getResponseBodyAsString();
+                endpointData = endpointData.replace("{", "");
+                endpointData = endpointData.replace("}", "");
+                String[] endpointArray = endpointData.split(",");
+                AccesspointDetails accesspointDetails = new AccesspointDetails();
+
+                if (endpointArray.length >= 3) {
+
+                    accesspointDetails.setUrl(endpointArray[0].split("=")[1]);
+                    accesspointDetails.setBusDoxProtocol(endpointArray[1].split("=")[1]);
+                    accesspointDetails.setCommonName(endpointArray[2].split("=")[1]);
+                }
+                return accesspointDetails;
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    /**
+     * Get the access point details if EHFV3 order response is enabled
+     *
+     * @param participantId
+     * @param userName
+     * @param password
+     * @return the AccesspointDetails
+     * @throws Exception
+     */
+    public static AccesspointDetails getEHFV3OrderResponseEndPoint(String participantId, String userName, String password) throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_ORDER_RESPONSE);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(participantId), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+
+            int status = httpClient.executeMethod(httpPost);
+            if (status == HttpStatus.SC_OK) {
+
+                String endpointData = httpPost.getResponseBodyAsString();
+                endpointData = endpointData.replace("{", "");
+                endpointData = endpointData.replace("}", "");
+                String[] endpointArray = endpointData.split(",");
+                AccesspointDetails accesspointDetails = new AccesspointDetails();
+
+                if (endpointArray.length >= 3) {
+
+                    accesspointDetails.setUrl(endpointArray[0].split("=")[1]);
+                    accesspointDetails.setBusDoxProtocol(endpointArray[1].split("=")[1]);
+                    accesspointDetails.setCommonName(endpointArray[2].split("=")[1]);
+                }
+                return accesspointDetails;
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    /**
      * Get the access point details if EHFV3 CreditNote is enabled
      *
      * @param participantId
@@ -1057,4 +1147,75 @@ public final class AccessPointClient {
             httpPost.releaseConnection();
         }
     }
+    
+    /**
+     * Send order.
+     *
+     * @param documentDTO the document dto
+     * @return the string
+     * @throws Exception the exception
+     */
+    public static String sendEHFV3Order(DocumentDTO documentDTO) throws Exception {
+        return sendOrder(documentDTO, USERNAME, PASSWORD);
+    }
+
+    /**
+     * Send order.
+     *
+     * @param documentDTO the document dto
+     * @param userName the user name
+     * @param password the password
+     * @return the string
+     * @throws Exception the exception
+     */
+    public static String sendEHFV3Order(DocumentDTO documentDTO, String userName, String password)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_SEND_EHFV3_ORDER);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(documentDTO), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (String) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    public static String sendEHFV3OrderResponse(DocumentDTO documentDTO) throws Exception {
+        return sendOrderResponse(documentDTO, USERNAME, PASSWORD);
+    }
+
+    public static String sendEHFV3OrderResponse(DocumentDTO documentDTO, String userName, String password)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_SEND_EHFV3_ORDER_RESPONSE);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(documentDTO), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (String) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
 }
