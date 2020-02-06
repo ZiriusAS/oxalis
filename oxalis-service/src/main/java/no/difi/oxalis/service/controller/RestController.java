@@ -71,7 +71,7 @@ public class RestController extends BaseController {
     @Path("/sendEHFV3Order")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response send(@Context SecurityContext sc, byte[] data) {
+    public Response sendEHFV3Order(@Context SecurityContext sc, byte[] data) {
 
         try {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
@@ -91,7 +91,7 @@ public class RestController extends BaseController {
     @Path("/sendEHFV3OrderResponse")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response send(@Context SecurityContext sc, byte[] data) {
+    public Response sendEHFV3OrderResponse(@Context SecurityContext sc, byte[] data) {
 
         try {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);

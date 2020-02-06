@@ -1,5 +1,5 @@
 /*
- * @(#)OrderUtilsTest.java
+ * @(#)UblOrderUtilsTest.java
  *
  * Copyright (c) 2013, Zirius AS.
  * All rights reserved. 
@@ -21,14 +21,14 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 /**
- * The Class OrderUtilsTest.
+ * The Class UblOrderUtilsTest.
  * 
  * @author vasanthis
  * @since Oct 18, 2013
  */
-public class OrderUtilsTest {
+public class UblOrderUtilsTest {
 
-    public OrderUtilsTest() {
+    public UblOrderUtilsTest() {
     }
 
     /**
@@ -46,12 +46,12 @@ public class OrderUtilsTest {
 
             OrderDTO orderDTO = TestData.getEHFOrderInfo(TestData.ORDER);
 
-            OrderUtils.generateEHFOrderXML(orderDTO, TestData.ORDER_FILE_NAME);
+            UblOrderUtils.generateEHFOrderXML(orderDTO, TestData.ORDER_FILE_NAME);
             Assert.assertTrue(file.exists());
 
             Assert.assertTrue(new SchemaValidator().validateOrder(file.getAbsolutePath()));
 
-            byte[] xmlByteArray = OrderUtils.generateEHFOrderXML(orderDTO);
+            byte[] xmlByteArray = UblOrderUtils.generateEHFOrderXML(orderDTO);
             Assert.assertNotNull(xmlByteArray);
 
         } catch (Throwable ex) {
@@ -68,7 +68,7 @@ public class OrderUtilsTest {
         try {
             InputStream is = getClass().getResourceAsStream("order-ehf.xml");
 
-            OrderDTO orderDTO = OrderUtils.getEHFOrder(is);
+            OrderDTO orderDTO = UblOrderUtils.getEHFOrder(is);
             Assert.assertNotNull(orderDTO);
 
         } catch (Throwable ex) {
@@ -88,12 +88,12 @@ public class OrderUtilsTest {
 
             OrderResponseDTO orderResponseDTO = TestData.getEHFOrderResponseInfo();
 
-            OrderUtils.generateEHFOrderResponseXML(orderResponseDTO, TestData.ORDER_RESPONSE_FILE_NAME);
+            UblOrderUtils.generateEHFOrderResponseXML(orderResponseDTO, TestData.ORDER_RESPONSE_FILE_NAME);
             Assert.assertTrue(file.exists());
 
             Assert.assertTrue(new SchemaValidator().validateOrderResponse(file.getAbsolutePath()));
 
-            byte[] xmlByteArray = OrderUtils.generateEHFOrderResponseXML(orderResponseDTO);
+            byte[] xmlByteArray = UblOrderUtils.generateEHFOrderResponseXML(orderResponseDTO);
             Assert.assertNotNull(xmlByteArray);
 
         } catch (Throwable ex) {
@@ -108,14 +108,14 @@ public class OrderUtilsTest {
 
             InputStream is = getClass().getResourceAsStream("order-response-ehf.xml");
 
-            OrderResponseDTO orderResponseDTO = OrderUtils.getEHFOrderResponse(is);
+            OrderResponseDTO orderResponseDTO = UblOrderUtils.getEHFOrderResponse(is);
 
             File newFile = new File("order-response-out.xml");
             if (newFile.exists()) {
                 newFile.delete();
             }
 
-            OrderUtils.generateEHFOrderResponseXML(orderResponseDTO, newFile.getAbsolutePath());
+            UblOrderUtils.generateEHFOrderResponseXML(orderResponseDTO, newFile.getAbsolutePath());
 
             Assert.assertNotNull(orderResponseDTO);
 
