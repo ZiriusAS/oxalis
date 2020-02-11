@@ -84,9 +84,12 @@ public enum EHFConstants {
     DOCUMENT_CURRENCY_CODE_ID("ISO4217"),
     ORDER_RESPONSE_CODE("UNCL1225"),
     COUNTRY_CODE_NORWAY("NO"),
-    ORDER_RESPONSE_ITEM_CLASSIFICATION_CODE("UNSPSC"),
+    ORDER_RESPONSE_ITEM_CLASSIFICATION_CODE("SST"),
     MVA("MVA"),
     ORG("ORG"),
+    
+    EHF_THREE_DOT_ZERO_ORDER_COMPANY_ID_SCHEME("0192"),
+    EHF_THREE_DOT_ZERO_ORDER_LEGAL_ENTITY_SCHEME_NAME("Organisasjonsnummer"),
     
     EHF_THREE_DOT_ZERO_INVOICE("urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1"),
     EHF_THREE_DOT_ZERO_CREDIT_NOTE("urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2::CreditNote##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1"),
