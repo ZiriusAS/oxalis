@@ -39,10 +39,6 @@ import no.difi.oxalis.api.lang.OxalisException;
 import no.difi.oxalis.api.lookup.LookupService;
 import no.difi.oxalis.outbound.OxalisOutboundComponent;
 import no.difi.oxalis.service.bo.AuditLogBO;
-//import no.difi.oxalis.as2.api.APConstants;
-//import no.difi.oxalis.as2.api.AuditEvent;
-//import no.difi.oxalis.as2.api.AuditLog;
-//import no.difi.oxalis.as2.server.ObjectStorage;
 import no.difi.oxalis.service.bo.OutboundBO;
 import no.difi.oxalis.service.model.AuditEvent;
 import no.difi.oxalis.service.model.AuditLog;
@@ -246,89 +242,6 @@ public class OutboundService extends BaseService{
             throw e;
         }
      }
-    /**
-     * Send ehf document to the recipient.
-     * 
-     * @param documentDTO
-     *            the document dto
-     * @param userId
-     *            the user id
-     * @return the string
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
-     * @throws ClassNotFoundException
-     *             the class not found exception
-     * @throws SAXException
-     *             the sAX exception
-     */
-   /* public String sendDocument(DocumentDTO documentDTO, String userId, boolean isResendDocument) throws IOException,
-            ClassNotFoundException, Exception {
-        
-      
-        
-        if (documentDTO == null || !documentDTO.isComplete()) {
-            throw new ServerException(OutboundConstants.INVALID_DATA);
-        }
-
-        TransmissionResponse response = null;
-        
-        try (InputStream invoiceFile = new ByteArrayInputStream(documentDTO.getFileData())) {
-
-            StringWriter writer = new StringWriter();
-            IOUtils.copy(invoiceFile, writer);
-            String invoiceString = writer.toString();
-
-            OxalisOutboundComponent oxalisOutboundComponent = new OxalisOutboundComponent();
-            TransmissionRequestBuilder transmissionBuilder = oxalisOutboundComponent.getTransmissionRequestBuilder();
-            TransmissionRequest transmissionRequest = null;
-
-            if (testEnvironment) {
-
-                URI server_uri = URI.create(oxalisServerUrl);
-                InputStream inputStream = new FileInputStream(oxalisCertificatePath);
-                X509Certificate certificate = Validator.getCertificate(inputStream);     
-                transmissionBuilder.setTransmissionBuilderOverride(true);
-                
-                IOUtils.closeQuietly(inputStream);
-                
-                Log.info("Transmitting payload...");
-                transmissionRequest = transmissionBuilder
-                        .payLoad(IOUtils.toInputStream(invoiceString))
-                        .overrideAs2Endpoint(Endpoint.of(TransportProfile.AS2_1_0, server_uri, certificate))
-                        .build(documentDTO.getReceiverId(), documentDTO.getSenderId());
-            } else {
-
-                Log.info("Transmitting payload...");
-
-                if (overrideHeader && documentDTO.getReceiverId() != null) {
-
-                    transmissionRequest = transmissionBuilder
-                        .payLoad(IOUtils.toInputStream(invoiceString))
-                        .build(documentDTO.getReceiverId(), documentDTO.getSenderId());
-                } else {
-
-                    transmissionRequest = transmissionBuilder
-                        .payLoad(IOUtils.toInputStream(invoiceString))
-                        .build();
-                }
-            }
-
-            if (documentDTO.getFileName() != null) {
-                transmissionRequest.setHeaderMessageId("<" + documentDTO.getFileName().replace(".xml", "").replace(".doc.xml", "") + ">");
-            }
-
-            Map<String, String> otherAttributes = new HashMap<String, String>();
-            otherAttributes.put(APConstants.USER_ID, userId);
-            otherAttributes.put(APConstants.LICENSE_ID, documentDTO.getLicenseId());
-            otherAttributes.put(APConstants.DOCUMENT_TYPE, AuditEvent.SEND_INVOICE.name());
-            transmissionRequest.setOtherAttributes(otherAttributes);
-            Transmitter transmitter = oxalisOutboundComponent.getTransmitter();     
-            response  = transmitter.transmit(transmissionRequest);
-
-        }
-
-        return ((response != null && response.getTransmissionIdentifier() != null) ? response.getTransmissionIdentifier().toString() : null);
-    }*/
     
     /**
      * Get Message Info
@@ -674,7 +587,11 @@ public class OutboundService extends BaseService{
 
                     transmissionID = sendDocument(documentDTO, DS_NAME, true);
 
-                    LOGGER.info(" Resend : SUCCESS : " + file.getName() + " ==> " + transmissionID);
+                    if (transmissionID != null) {                        
+                        LOGGER.info(" Resend : SUCCESS : " + file.getName() + " ==> " + transmissionID);
+                    } else {
+                        LOGGER.info(" Resend : FAIL : " + file.getName() + " ==> " + transmissionID);
+                    }
                 } else {
                     LOGGER.info(" Resend : SKIPPED : " + file.getName());
                 }

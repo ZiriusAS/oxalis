@@ -31,10 +31,7 @@ import no.difi.vefa.peppol.common.model.*;
 
 import java.io.*;
 import java.net.URI;
-import java.nio.file.Files;
 import java.security.cert.X509Certificate;
-import javax.xml.ws.http.HTTPException;
-import no.difi.certvalidator.api.CertificateValidationException;
 import no.difi.oxalis.api.outbound.TransmissionRequest;
 import no.difi.oxalis.api.outbound.TransmissionResponse;
 import no.difi.oxalis.api.outbound.Transmitter;
@@ -57,6 +54,7 @@ public class CustomMain {
     private Boolean isTestEnvironment;
     private String oxalisUrl;
     private String oxalisCertificatePath;
+    private final Tracer tracer;
     
     public Boolean getTestEnvironment() {
         return isTestEnvironment;
@@ -87,6 +85,7 @@ public class CustomMain {
         this.isTestEnvironment = testEnv;
         this.oxalisUrl = OxalisUrl;
         this.oxalisCertificatePath = oxalisCertPath;
+        this.tracer = getOutBoundComponent().getInjector().getInstance(Tracer.class);
     }
     
     public static CustomMain getInstance(Boolean testEnv, String oxalisUrl, String oxalisCertPath) {
@@ -127,23 +126,25 @@ public class CustomMain {
     
     public String send(String filepath) throws Exception {
 
+    	Span span = null;
         try {
 
             TransmissionParameters params = new TransmissionParameters(getOutBoundComponent());
 
             if (this.isTestEnvironment) {
                 
-                InputStream inputStream = new FileInputStream(this.oxalisCertificatePath);
-                X509Certificate certificate = Validator.getCertificate(inputStream);
-                params.setEndpoint(Endpoint.of(TransportProfile.PEPPOL_AS4_2_0, URI.create(this.oxalisUrl), certificate));
+                try (InputStream inputStream = new FileInputStream(this.oxalisCertificatePath)) {
+
+                	X509Certificate certificate = Validator.getCertificate(inputStream);
+                	params.setEndpoint(Endpoint.of(TransportProfile.PEPPOL_AS4_2_0, URI.create(this.oxalisUrl), certificate));
+                }
             }
 
             File xmlPayloadFile = new File(filepath);
 
             TransmissionTask transmissionTask = new TransmissionTask(params, xmlPayloadFile);
 
-            Tracer tracer = getOutBoundComponent().getInjector().getInstance(Tracer.class);
-            Span span = tracer.buildSpan("standalone").start();
+            span = tracer.buildSpan("standalone").start();
 
             TransmissionRequest transmissionRequest = transmissionTask.createTransmissionRequest(span);
             Transmitter transmitter = getOutBoundComponent().getTransmitter();
@@ -155,35 +156,34 @@ public class CustomMain {
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        }        
+        }  finally {
+        	span.finish();
+        }
     }
     
     public String sendDocumentUsingFactory(InputStream inputStream) throws Exception {
-        
-        TransmissionParameters params = new TransmissionParameters(getOutBoundComponent());
 
-        Tracer tracer = getOutBoundComponent().getInjector().getInstance(Tracer.class);
-
-        Span span = tracer.buildSpan("standalone").start();
-
-        TransmissionResponse transmissionResponse;
+        Span span = null;
         if (inputStream != null) {
 
             try {
-
-                transmissionResponse = params.getOxalisOutboundComponent()
-                        .getTransmissionService()
-                        .send(inputStream, params.getTag(), span);
-
+                
+                span = tracer.buildSpan("standalone").start();
+            	TransmissionParameters params = new TransmissionParameters(getOutBoundComponent());
+            		
+            	TransmissionResponse transmissionResponse = params.getOxalisOutboundComponent()
+        				.getTransmissionService()
+        				.send(inputStream, params.getTag(), span);
+        		
                 return transmissionResponse.getTransmissionIdentifier().getIdentifier();
+            	
             } catch (Exception e) {
                 e.printStackTrace();
                 throw e;
             } finally {
                 span.finish();
             }
-        }
-         
-        return "True";
+        }         
+        throw new IOException("Input Stream cloased or not available");
     }
 }
