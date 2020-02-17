@@ -21,3 +21,7 @@ rebel.xml
 /outbound
 dev.make
 /dist
+
+*/nbactions.xml
+*/catalina.base_IS_UNDEFINED
+oxalis-service/nb-configuration.xml
