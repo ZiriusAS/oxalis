@@ -1505,6 +1505,8 @@ public class UblOrderUtils {
                     nameCommonBasic.setValue(invoiceLineItemDTO.getDescription());
                     itemType.setName(nameCommonBasic);
                     itemIdentificationType = new ItemIdentificationType();
+                    idCommonBasic = new IDCommonBasic();
+                    idCommonBasic.setValue(invoiceLineItemDTO.getProductNo());
                     itemIdentificationType.setID(idCommonBasic);
                     itemType.setSellersItemIdentification(itemIdentificationType);
                 }
