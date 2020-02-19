@@ -25,6 +25,7 @@ package no.difi.oxalis.commons.persist;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import no.difi.oxalis.api.evidence.EvidenceFactory;
 import no.difi.oxalis.api.inbound.InboundMetadata;
@@ -70,9 +71,13 @@ public class DefaultPersister implements PersisterHandler {
         Path path = inboundFolder.resolve(
                 String.format("%s.doc.xml", FileUtils.filterString(transmissionIdentifier.getIdentifier())));
 
-        try (OutputStream outputStream = Files.newOutputStream(path)) {
+        // To resolve concurrent read write probelm, write the file to temp location 
+        Path temp = File.createTempFile(FileUtils.filterString(transmissionIdentifier.getIdentifier()), ".doc.xml").toPath();
+        try (OutputStream outputStream = Files.newOutputStream(temp)) {
             ByteStreams.copy(inputStream, outputStream);
         }
+        // move the temp file to actual path 
+        temp.toFile().renameTo(path.toFile());
 
         log.debug("Payload persisted to: {}", path);
 
@@ -88,11 +93,15 @@ public class DefaultPersister implements PersisterHandler {
         Path path = inboundFolder.resolve(
                 String.format("%s.receipt.dat", FileUtils.filterString(inboundMetadata.getTransmissionIdentifier().getIdentifier())));
 
-        try (OutputStream outputStream = Files.newOutputStream(path)) {
+        // To resolve concurrent read write probelm, write the file to temp location 
+        Path temp = File.createTempFile(FileUtils.filterString(inboundMetadata.getTransmissionIdentifier().getIdentifier()), ".receipt.dat").toPath();
+        try (OutputStream outputStream = Files.newOutputStream(temp)) {
             evidenceFactory.write(outputStream, inboundMetadata);
         } catch (EvidenceException e) {
             throw new IOException("Unable to persist receipt.", e);
         }
+        // move the temp file to actual path 
+        temp.toFile().renameTo(path.toFile());
 
         log.debug("Receipt persisted to: {}", path);
     }
