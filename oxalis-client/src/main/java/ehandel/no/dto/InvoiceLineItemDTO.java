@@ -41,8 +41,10 @@ public class InvoiceLineItemDTO extends BaseDTO {
     private String note;
     private String description;
     private String responseCode;
+    private String buyersIdentification;
     private String sellersIdentification;
     private String standardIdentification;
+    private String standardIdentificationScheme;
     private String lineStatusCode;
     private String originCountry;
     private DeliveryDTO deliveryDTO;
@@ -292,4 +294,21 @@ public class InvoiceLineItemDTO extends BaseDTO {
     public void setBillingReferenceDTOs(List<BillingReferenceDTO> billingReferenceDTOs) {
         this.billingReferenceDTOs = billingReferenceDTOs;
     }
+
+    public String getBuyersIdentification() {
+        return buyersIdentification;
+    }
+
+    public void setBuyersIdentification(String buyersIdentification) {
+        this.buyersIdentification = buyersIdentification;
+    }
+
+    public String getStandardIdentificationScheme() {
+        return standardIdentificationScheme;
+    }
+
+    public void setStandardIdentificationScheme(String standardIdentificationScheme) {
+        this.standardIdentificationScheme = standardIdentificationScheme;
+    }
+    
 }

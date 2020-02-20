@@ -1443,7 +1443,7 @@ public class UblOrderUtils {
             for (InvoiceLineItemDTO invoiceLineItemDTO : invoiceLineItemDTOs) {
 
                 if (invoiceLineItemDTO.getTotalExcTax() == null) {
-                    continue;
+                    throw new RuntimeException("TotalExcTax values must be specified");
                 }
 
                 orderLine = new OrderLineCommonAggregate();
@@ -1502,13 +1502,36 @@ public class UblOrderUtils {
 
                     taxCategoryType.setTaxScheme(taxSchemeCommonAggregate);
                     nameCommonBasic = new NameCommonBasic();
-                    nameCommonBasic.setValue(invoiceLineItemDTO.getDescription());
+                    nameCommonBasic.setValue(invoiceLineItemDTO.getProductName());
                     itemType.setName(nameCommonBasic);
-                    itemIdentificationType = new ItemIdentificationType();
-                    idCommonBasic = new IDCommonBasic();
-                    idCommonBasic.setValue(invoiceLineItemDTO.getProductNo());
-                    itemIdentificationType.setID(idCommonBasic);
-                    itemType.setSellersItemIdentification(itemIdentificationType);
+                    
+                    if(invoiceLineItemDTO.getBuyersIdentification() != null) {
+                        
+                        itemIdentificationType = new ItemIdentificationType();
+                        idCommonBasic = new IDCommonBasic();
+                        idCommonBasic.setValue(invoiceLineItemDTO.getBuyersIdentification());
+                        itemIdentificationType.setID(idCommonBasic);
+                        itemType.setBuyersItemIdentification(itemIdentificationType);
+                    }
+
+                    if(invoiceLineItemDTO.getStandardIdentification() != null) {
+                        
+                        itemIdentificationType = new ItemIdentificationType();
+                        idCommonBasic = new IDCommonBasic();
+                        idCommonBasic.setValue(invoiceLineItemDTO.getStandardIdentification());
+                        idCommonBasic.setSchemeID(EHFConstants.ORDER_EHFV3_GTIN.getValue());
+                        itemIdentificationType.setID(idCommonBasic);
+                        itemType.setStandardItemIdentification(itemIdentificationType);
+                    }
+
+                    if(invoiceLineItemDTO.getSellersIdentification() != null) {
+                        
+                        itemIdentificationType = new ItemIdentificationType();
+                        idCommonBasic = new IDCommonBasic();
+                        idCommonBasic.setValue(invoiceLineItemDTO.getSellersIdentification());
+                        itemIdentificationType.setID(idCommonBasic);
+                        itemType.setSellersItemIdentification(itemIdentificationType);
+                    }
                 }
 
                 if (invoiceLineItemDTO.getUnitPrice() != null) {
@@ -1709,6 +1732,23 @@ public class UblOrderUtils {
                         idCommonBasic = itemIdentificationType.getID();
                         if (idCommonBasic != null && idCommonBasic.getValue() != null) {
                             invoiceLineItemDTO.setSellersIdentification(idCommonBasic.getValue());
+                        }
+                    }
+                    
+                    itemIdentificationType = itemType.getBuyersItemIdentification();
+                    if (itemIdentificationType != null) {
+                        idCommonBasic = itemIdentificationType.getID();
+                        if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                            invoiceLineItemDTO.setBuyersIdentification(idCommonBasic.getValue());
+                        }
+                    }
+                    
+                    itemIdentificationType = itemType.getStandardItemIdentification();
+                    if (itemIdentificationType != null) {
+                        idCommonBasic = itemIdentificationType.getID();
+                        if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                            invoiceLineItemDTO.setStandardIdentification(idCommonBasic.getValue());
+                            invoiceLineItemDTO.setStandardIdentificationScheme(idCommonBasic.getSchemeID());
                         }
                     }
                     
