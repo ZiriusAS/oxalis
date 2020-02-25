@@ -1532,6 +1532,8 @@ public class UblOrderUtils {
                         itemIdentificationType.setID(idCommonBasic);
                         itemType.setSellersItemIdentification(itemIdentificationType);
                     }
+                } else {
+                    throw new RuntimeException("TaxPercent can't be Null value");
                 }
 
                 if (invoiceLineItemDTO.getUnitPrice() != null) {
@@ -1548,6 +1550,8 @@ public class UblOrderUtils {
                     baseQuantityCommonBasic.setUnitCodeListID(EHFConstants.UNIT_CODE_LIST_ID.getValue());
                     price.setBaseQuantity(baseQuantityCommonBasic);
                     lineitem.setPrice(price);
+                } else {
+                    throw new RuntimeException("UnitPrice must be provided for item details");
                 }
 
                 if (invoiceLineItemDTO.getQuantity() != null) {
