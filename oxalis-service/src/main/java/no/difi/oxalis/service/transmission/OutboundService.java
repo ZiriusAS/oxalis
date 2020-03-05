@@ -35,8 +35,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import javax.xml.ws.http.HTTPException;
+import no.difi.oxalis.api.evidence.EvidenceFactory;
 import no.difi.oxalis.api.lang.OxalisException;
 import no.difi.oxalis.api.lookup.LookupService;
+import no.difi.oxalis.api.outbound.TransmissionResponse;
 import no.difi.oxalis.outbound.OxalisOutboundComponent;
 import no.difi.oxalis.service.bo.AuditLogBO;
 import no.difi.oxalis.service.bo.OutboundBO;
@@ -81,9 +83,12 @@ public class OutboundService extends BaseService{
     private static OxalisOutboundComponent oxalisOutboundComponent = null;
     
     private static final Logger LOGGER = LoggerFactory.getLogger(OutboundService.class);
-
     
+    private final EvidenceFactory evidenceFactory;
+
     protected OutboundService() {
+        
+        evidenceFactory = oxalisOutboundComponent.getEvidenceFactory();
     }
 
     public static OutboundService getInstance() {
@@ -163,7 +168,11 @@ public class OutboundService extends BaseService{
                 try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
 
                     LOGGER.info(" ##### Sending Document : PRODUCTION #####");
-                    transmissionIdentifier = obj.sendDocumentUsingFactory(inputStream);
+                    TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
+                    transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+                    
+                    
+                    
                 }
             }
 

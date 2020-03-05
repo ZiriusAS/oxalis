@@ -103,6 +103,13 @@
             <groupId>no.difi.vefa</groupId>
             <artifactId>peppol-security</artifactId>
         </dependency>
+        
+        <dependency>
+            <groupId>com.zirius.zerp</groupId>
+            <artifactId>EHFObjectStorageClient</artifactId>               
+            <version>1.0</version>
+        </dependency>
+        
     </dependencies>
 
     <build>

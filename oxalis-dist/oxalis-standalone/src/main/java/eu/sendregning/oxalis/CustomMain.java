@@ -161,7 +161,7 @@ public class CustomMain {
         }
     }
     
-    public String sendDocumentUsingFactory(InputStream inputStream) throws Exception {
+    public TransmissionResponse sendDocumentUsingFactory(InputStream inputStream) throws Exception {
 
         Span span = null;
         if (inputStream != null) {
@@ -175,7 +175,7 @@ public class CustomMain {
         				.getTransmissionService()
         				.send(inputStream, params.getTag(), span);
         		
-                return transmissionResponse.getTransmissionIdentifier().getIdentifier();
+                return transmissionResponse;
             	
             } catch (Exception e) {
                 e.printStackTrace();
