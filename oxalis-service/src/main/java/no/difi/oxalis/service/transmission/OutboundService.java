@@ -16,6 +16,7 @@ import eu.peppol.outbound.api.MessageRemoverDTO;
 import eu.peppol.outbound.api.UserDTO;
 import eu.peppol.outbound.api.UserRole;
 import eu.sendregning.oxalis.CustomMain;
+import eu.sendregning.oxalis.TransmissionParameters;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -83,12 +84,9 @@ public class OutboundService extends BaseService{
     private static OxalisOutboundComponent oxalisOutboundComponent = null;
     
     private static final Logger LOGGER = LoggerFactory.getLogger(OutboundService.class);
-    
-    private final EvidenceFactory evidenceFactory;
 
     protected OutboundService() {
         
-        evidenceFactory = oxalisOutboundComponent.getEvidenceFactory();
     }
 
     public static OutboundService getInstance() {
@@ -171,8 +169,13 @@ public class OutboundService extends BaseService{
                     TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
                     transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
                     
+                    File evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
                     
+                    oxalisOutboundComponent.getEvidenceFactory().write(new FileOutputStream(evidence), transmissionReponse);
                     
+                    // move to actual location
+                    TransmissionParameters params = new TransmissionParameters(oxalisOutboundComponent);
+                    evidence.renameTo(new File(params.getEvidencePath().getAbsolutePath() + File.separator + evidence.getName()));
                 }
             }
 

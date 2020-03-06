@@ -38,7 +38,7 @@ import java.util.Optional;
  *         Time: 13.06
  * @author erlend
  */
-class TransmissionParameters {
+public class TransmissionParameters {
 
     private ParticipantIdentifier receiver;
 
