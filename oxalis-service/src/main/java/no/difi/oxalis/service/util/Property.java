@@ -29,7 +29,9 @@ public enum Property {
     
     OUTBOUND_MESSAGE_STORE_PATH("oxalis.outbound.message.store"), 
     
-    FOLLOWUP_MESSAGE_STORE_PATH("oxalis.followup.message.store");
+    FOLLOWUP_MESSAGE_STORE_PATH("oxalis.followup.message.store"),
+    
+    EVIDENCE_PATH("evidence.path");
     
     protected String propertyName;
 

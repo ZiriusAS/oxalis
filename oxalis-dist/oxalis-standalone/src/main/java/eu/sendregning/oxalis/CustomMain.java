@@ -124,7 +124,7 @@ public class CustomMain {
         return sbdh;
     }
     
-    public String send(String filepath) throws Exception {
+    public TransmissionResponse send(String filepath) throws Exception {
 
     	Span span = null;
         try {
@@ -151,7 +151,7 @@ public class CustomMain {
 
             TransmissionResponse response = transmitter.transmit(transmissionRequest, span);
 
-            return response.getTransmissionIdentifier().getIdentifier();
+            return response;
 
         } catch (Exception e) {
             e.printStackTrace();

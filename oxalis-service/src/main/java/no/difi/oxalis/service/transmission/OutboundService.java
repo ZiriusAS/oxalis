@@ -77,6 +77,7 @@ public class OutboundService extends BaseService{
     private static String followUpMsgDir;
     private static final String XML_EXT = "xml";
     private static final String[] EXT_ARR = {XML_EXT};
+    private static String evidencePath = "";
     
     private static String DS_NAME="";
     
@@ -131,6 +132,8 @@ public class OutboundService extends BaseService{
             outboundMsgDir =  PropertyUtil.getProperty(Property.OUTBOUND_MESSAGE_STORE_PATH);
             followUpMsgDir =  PropertyUtil.getProperty(Property.FOLLOWUP_MESSAGE_STORE_PATH);
             DS_NAME = PropertyUtil.getProperty(Property.DATASOURCE_NAME);
+            
+            evidencePath = PropertyUtil.getProperty(Property.EVIDENCE_PATH);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -160,7 +163,18 @@ public class OutboundService extends BaseService{
                     fos.write(contentWrapedWithSbdh);
                     LOGGER.info(" --- Temp File generated for Testing " + testFile.getName());
                 }
-                transmissionIdentifier =  obj.send(testFile.getPath());
+                TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
+                
+                transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+                File evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
+                
+                try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
+                    
+                    getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
+                }
+                
+                // move to actual location
+                evidence.renameTo(new File(evidencePath + File.separator + evidence.getName()));
             } else {
                 
                 try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
@@ -171,11 +185,14 @@ public class OutboundService extends BaseService{
                     
                     File evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
                     
-                    oxalisOutboundComponent.getEvidenceFactory().write(new FileOutputStream(evidence), transmissionReponse);
+                
+                    try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
+
+                        getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
+                    }
                     
                     // move to actual location
-                    TransmissionParameters params = new TransmissionParameters(oxalisOutboundComponent);
-                    evidence.renameTo(new File(params.getEvidencePath().getAbsolutePath() + File.separator + evidence.getName()));
+                    evidence.renameTo(new File(evidencePath + File.separator + evidence.getName()));
                 }
             }
 
