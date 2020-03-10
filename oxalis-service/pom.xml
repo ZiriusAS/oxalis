@@ -4,12 +4,12 @@
     <parent>
         <artifactId>oxalis</artifactId>
         <groupId>no.difi.oxalis</groupId>
-        <version>4.1.1-SNAPSHOT</version>
+        <version>4.1.2</version>
     </parent>
 
     <groupId>no.difi.oxalis</groupId>
     <artifactId>oxalis-service</artifactId>
-    <version>4.0.2</version>
+    <version>4.1.2</version>
     <packaging>war</packaging>
 
     <name>Oxalis :: Service</name>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>oxalis-client</artifactId>
-            <version>4.1.1-SNAPSHOT</version>
+            <version>4.1.2</version>
         </dependency>
         <dependency>
             <groupId>javax</groupId>

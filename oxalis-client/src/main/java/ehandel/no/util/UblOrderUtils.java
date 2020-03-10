@@ -1932,7 +1932,7 @@ public class UblOrderUtils {
 
             OrderResponseCodeCommonBasic orderResponseCodeCommonBasic = new OrderResponseCodeCommonBasic();
             orderResponseCodeCommonBasic.setListID(EHFConstants.ORDER_RESPONSE_CODE.getValue());
-            orderResponseCodeCommonBasic.setValue(orderResponseDTO.getOrderResponseNo());
+            orderResponseCodeCommonBasic.setValue(orderResponseDTO.getOrderResponseCode());
 
             orderResponse.setOrderResponseCode(orderResponseCodeCommonBasic);
 
@@ -1944,7 +1944,7 @@ public class UblOrderUtils {
 
             OrderReferenceCommonAggregate orderReferenceCommonAggregate = new OrderReferenceCommonAggregate();
             idCommonBasic = new IDCommonBasic();
-            idCommonBasic.setValue(orderResponseDTO.getOrderResponseNo());
+            idCommonBasic.setValue(orderResponseDTO.getOrderReferenceId());
             orderReferenceCommonAggregate.setID(idCommonBasic);
             orderResponse.getOrderReferences().add(orderReferenceCommonAggregate);
             
