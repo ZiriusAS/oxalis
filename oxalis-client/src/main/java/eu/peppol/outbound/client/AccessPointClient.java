@@ -66,6 +66,8 @@ public final class AccessPointClient {
     private static final String METHOD_RECEIVE = "receive";
     private static final String METHOD_RECEIVE_MESSAGE_ID = "receiveMessageId";
     private static final String METHOD_RECEIVE_UN_READ_MESSAGE_ID_FOR_WEB = "receiveUnReadMessageIdForWeb";
+    private static final String METHOD_RECEIVE_UN_READ_MESSAGE_ID_OF_ORDER = "receiveUnReadMessageIdOfOrder";
+    private static final String METHOD_RECEIVE_UN_READ_MESSAGE_ID_OF_ORDER_RESPONSE = "receiveUnReadMessageIdOfOrderResponse";
     private static final String METHOD_GET_MESSAGE_INFO = "getMessageInfo";
     private static final String METHOD_FETCH = "fetch";
     private static final String METHOD_FETCH_MESSAGE_ID = "fetchMessageId";
@@ -442,7 +444,95 @@ public final class AccessPointClient {
     public static MessageIdListDTO getUnReadMessageIdForWeb() throws Exception {
         return getUnReadMessageIdForWeb(USERNAME, PASSWORD);
     }
+    
+    /**
+     * Get un Read Message Id for Web
+     *
+     * @param syncDate
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public static MessageIdListDTO getUnReadMessageIdOfOrder(String userName, String password, String participentId)
+            throws Exception {
 
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_RECEIVE_UN_READ_MESSAGE_ID_OF_ORDER + "/");
+
+        try {
+            
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(participentId), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+            
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (MessageIdListDTO) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    /**
+     * Get un Read Message Id for Web
+     *
+     * @param participentId receiver participent id if null returns messages of all receiver
+     * 
+     * @return MessageIdListDTO
+     * @throws Exception
+     */
+    public static MessageIdListDTO getUnReadMessageIdOfOrder(String participentId) throws Exception {
+        return getUnReadMessageIdOfOrder(USERNAME, PASSWORD, participentId);
+    }    
+
+        /**
+     * Get un Read Message Id for Web
+     *
+     * @param syncDate
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public static MessageIdListDTO getUnReadMessageIdOfOrderResponse(String userName, String password, String participentId)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_RECEIVE_UN_READ_MESSAGE_ID_OF_ORDER_RESPONSE + "/");
+
+        try {
+            
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(participentId), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (MessageIdListDTO) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    /**
+     * Get un Read Message Id for Web
+     *
+     * @param participentId receiver participent id if null returns messages of all receiver
+     * 
+     * @return MessageIdListDTO
+     * @throws Exception
+     */
+    public static MessageIdListDTO getUnReadMessageIdOfOrderResponse(String participentId) throws Exception {
+        return getUnReadMessageIdOfOrderResponse(USERNAME, PASSWORD, participentId);
+    }  
+    
     /**
      * Get Message Id
      *
@@ -1156,7 +1246,7 @@ public final class AccessPointClient {
      * @throws Exception the exception
      */
     public static String sendEHFV3Order(DocumentDTO documentDTO) throws Exception {
-        return sendOrder(documentDTO, USERNAME, PASSWORD);
+        return sendEHFV3Order(documentDTO, USERNAME, PASSWORD);
     }
 
     /**
@@ -1192,7 +1282,7 @@ public final class AccessPointClient {
     }
 
     public static String sendEHFV3OrderResponse(DocumentDTO documentDTO) throws Exception {
-        return sendOrderResponse(documentDTO, USERNAME, PASSWORD);
+        return sendEHFV3OrderResponse(documentDTO, USERNAME, PASSWORD);
     }
 
     public static String sendEHFV3OrderResponse(DocumentDTO documentDTO, String userName, String password)

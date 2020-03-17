@@ -93,14 +93,14 @@ public enum EHFConstants {
     
     EHF_THREE_DOT_ZERO_INVOICE("urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1"),
     EHF_THREE_DOT_ZERO_CREDIT_NOTE("urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2::CreditNote##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1"),
-    EHF_THREE_DOT_ZERO_ORDER("urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:www.cenbii.eu:transaction:biitrns001:ver2.0:extended:urn:www.peppol.eu:bis:peppol28a:ver1.0::2.1"),
+    EHF_THREE_DOT_ZERO_ORDER("urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:fdc:peppol.eu:poacc:trns:order:3::2.1"),
     EHF_THREE_DOT_ZERO_ORDER_RESPONSE("urn:oasis:names:specification:ubl:schema:xsd:OrderResponse-2::OrderResponse##urn:fdc:peppol.eu:poacc:trns:order_response:3::2.1"),
 
-    EHF_THREE_DOT_ZERO_ORDER_CUSTOMIZATION_ID("urn:fdc:peppol.eu:poacc:trns:order:3:extended:urn:fdc:anskaffelser.no:2019:ehf:spec:3.0"),
-    EHF_THREE_DOT_ZERO_ORDER_RESPONSE_CUSTOMIZATION_ID("urn:fdc:peppol.eu:poacc:trns:order_response:3:extended:urn:fdc:anskaffelser.no:2019:ehf:spec:3.0"),
+    EHF_THREE_DOT_ZERO_ORDER_CUSTOMIZATION_ID("urn:fdc:peppol.eu:poacc:trns:order:3"),
+    EHF_THREE_DOT_ZERO_ORDER_RESPONSE_CUSTOMIZATION_ID("urn:fdc:peppol.eu:poacc:trns:order_response:3"),
     
-    EHF_THREE_DOT_ZERO_ORDER_PROFILE_ID("urn:fdc:anskaffelser.no:2019:ehf:postaward:g3:02:1.0"),
-    EHF_THREE_DOT_ZERO_ORDER_RESPONSE_PROFILE_ID("urn:fdc:anskaffelser.no:2019:ehf:postaward:g3:02:1.0"),
+    EHF_THREE_DOT_ZERO_ORDER_PROFILE_ID("urn:fdc:peppol.eu:poacc:bis:ordering:3"),
+    EHF_THREE_DOT_ZERO_ORDER_RESPONSE_PROFILE_ID("urn:fdc:peppol.eu:poacc:bis:ordering:3"),
 
     EHF_THREE_DOT_ZERO_CUSTOMIZATION_ID("urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"),
     EHF_THREE_DOT_ZERO_PROFILE_ID("urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"),

@@ -148,7 +148,7 @@ public class OutboundService extends BaseService{
             PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
             byte[] contentWrapedWithSbdh = obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
 
-            if(testEnvironment) {
+            if (testEnvironment) {
 
                 LOGGER.info(" ##### Sending Document : TEST #####");
                 testFile = File.createTempFile(UUID.randomUUID().toString(), ".xml");
@@ -344,6 +344,60 @@ public class OutboundService extends BaseService{
         
         return messageIdListDTO;
     }
+    
+    /**
+     * Get All Message Id
+     * 
+     * @param timestamp
+     * @param userId
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException 
+     */
+    public MessageIdListDTO getAllUnReadMessageIdOfOrder(String participentId) throws IOException,
+            ClassNotFoundException, Exception {
+        
+        List<String> messageIdList = new ArrayList<String>();
+        MessageIdListDTO messageIdListDTO = new MessageIdListDTO();
+        OutboundBO outboundBO = new OutboundBO(DS_NAME);
+        
+        try {
+
+            messageIdList = outboundBO.getAllUnReadMessageIdOfOrder(participentId);
+            messageIdListDTO.setMessageIdList(messageIdList);
+        } catch (Exception e) {
+            
+        }
+        
+        return messageIdListDTO;
+    }
+
+    /**
+     * Get All Message Id
+     * 
+     * @param timestamp
+     * @param userId
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException 
+     */
+    public MessageIdListDTO getAllUnReadMessageIdOfOrderResponse(String participentId) throws IOException,
+            ClassNotFoundException, Exception {
+        
+        List<String> messageIdList = new ArrayList<String>();
+        MessageIdListDTO messageIdListDTO = new MessageIdListDTO();
+        OutboundBO outboundBO = new OutboundBO(DS_NAME);
+        
+        try {
+
+            messageIdList = outboundBO.getAllUnReadMessageIdOfOrderResponse(participentId);
+            messageIdListDTO.setMessageIdList(messageIdList);
+        } catch (Exception e) {
+            
+        }
+        
+        return messageIdListDTO;
+    }    
     
     /**
      * Mark a participant's message as read.

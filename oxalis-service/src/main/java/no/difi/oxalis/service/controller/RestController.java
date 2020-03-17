@@ -182,6 +182,46 @@ public class RestController extends BaseController {
     }
     
     @POST
+    @Path("/receiveUnReadMessageIdOfOrder")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response receiveUnReadMessageIdOfOrder(byte[] data) {
+        
+        try {
+            
+            String participentId = (String) getObjectFromStream(data);
+            
+            Log.info("Receive un read Message Ids of order");
+            MessageIdListDTO messageIdList = service.getAllUnReadMessageIdOfOrder(participentId);
+            
+            byte[] reponse = respond(messageIdList);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to recieve unread message id list: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+    }
+    
+    @POST
+    @Path("/receiveUnReadMessageIdOfOrderResponse")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response receiveUnReadMessageIdOfOrderResponse(byte[] data) {
+        
+        try {
+            
+            String participentId = (String) getObjectFromStream(data);
+            
+            Log.info("Receive un read Message Ids of OrderResponse");
+            MessageIdListDTO messageIdList = service.getAllUnReadMessageIdOfOrderResponse(participentId);
+            
+            byte[] reponse = respond(messageIdList);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to recieve unread message id list: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+    }
+    
+    @POST
     @Path("/markAsRead")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     @Produces(MediaType.APPLICATION_JSON)
@@ -318,7 +358,7 @@ public class RestController extends BaseController {
                 String[] endpointArray = endpoint.toString().split(",");
                 endPointData = endpointArray[1] + "," + endpointArray[0] + "," + endpointArray[3];
             } else {
-                throw new Exception("For Participant " + participantId + ": Accesspoint Details not found/EHFV3 CreditNote not enabled");
+                throw new Exception("For Participant " + participantId + ": Accesspoint Details not found/EHFV3 Order not enabled");
             }
             
             byte[] reponse = respond(endPointData);
@@ -345,7 +385,7 @@ public class RestController extends BaseController {
                 String[] endpointArray = endpoint.toString().split(",");
                 endPointData = endpointArray[1] + "," + endpointArray[0] + "," + endpointArray[3];
             } else {
-                throw new Exception("For Participant " + participantId + ": Accesspoint Details not found/EHFV3 CreditNote not enabled");
+                throw new Exception("For Participant " + participantId + ": Accesspoint Details not found/EHFV3 Order Response not enabled");
             }
             
             byte[] reponse = respond(endPointData);

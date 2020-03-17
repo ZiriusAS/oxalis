@@ -363,7 +363,18 @@ public class UblOrderUtils {
             if (idCommonBasic != null) {
                 orderResponseDTO.setOrderResponseNo(idCommonBasic.getValue());
             }
-
+            
+            OrderResponseCodeCommonBasic orderResponseCodeCommonBasic = orderResponse.getOrderResponseCode();
+            if (orderResponseCodeCommonBasic != null) {
+                orderResponseDTO.setOrderResponseCode(orderResponseCodeCommonBasic.getValue());
+            }
+            
+            List<OrderReferenceCommonAggregate> orderReferenceCommonAggregates = orderResponse.getOrderReferences();
+            if(orderReferenceCommonAggregates.size() > 0) {
+                IDCommonBasic iDCommonBasic = orderReferenceCommonAggregates.get(0).getID();
+                orderResponseDTO.setOrderReferenceId(iDCommonBasic.getValue());
+            }
+            
             List<NoteCommonBasic> notes = orderResponse.getNotes();
             if(notes.size() > 0) {
                 NoteCommonBasic note = notes.get(0);
@@ -1466,7 +1477,7 @@ public class UblOrderUtils {
                 idCommonBasic.setValue(invoiceLineItemDTO.getProductNo());
                 idCommonBasic.setSchemeID(EHFConstants.GTIN.getValue());
                 idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
-
+                
                 if (!StringUtils.isEmpty(invoiceLineItemDTO.getAccountingCode())) {
                     accountingCostCommonBasic = new AccountingCostCommonBasic();
                     accountingCostCommonBasic.setValue(invoiceLineItemDTO.getAccountingCode());
@@ -1476,31 +1487,32 @@ public class UblOrderUtils {
                 lineIDCommonBasic = new LineIDCommonBasic();
                 lineIDCommonBasic.setValue(String.valueOf(++i));
 
-                if (invoiceLineItemDTO.getTaxPercent() != null) {
+               // if (invoiceLineItemDTO.getTaxPercent() != null) {
 
-                    taxCategoryType = new TaxCategoryType();
+//                    taxCategoryType = new TaxCategoryType();
+//
+//                    idCommonBasic = new IDCommonBasic();
+//                    idCommonBasic.setValue(ConversionUtils.getTaxCategoryCode(invoiceLineItemDTO.getTaxPercent()));
+//                    idCommonBasic.setSchemeID(EHFConstants.TAX_CATEGORY_SCHEME_ID.getValue());
+//                    idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
+//                    taxCategoryType.setID(idCommonBasic);
+//
+//                    percentCommonBasic = new PercentCommonBasic();
+//                    percentCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceLineItemDTO.getTaxPercent()));
+//                    taxCategoryType.setPercent(percentCommonBasic);
 
-                    idCommonBasic = new IDCommonBasic();
-                    idCommonBasic.setValue(ConversionUtils.getTaxCategoryCode(invoiceLineItemDTO.getTaxPercent()));
-                    idCommonBasic.setSchemeID(EHFConstants.TAX_CATEGORY_SCHEME_ID.getValue());
-                    idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
-                    taxCategoryType.setID(idCommonBasic);
+//                    if (!StringUtils.isEmpty(invoiceLineItemDTO.getTaxTypeIntName())) {
+//
+//                        idCommonBasic = new IDCommonBasic();
+//                        idCommonBasic.setValue(invoiceLineItemDTO.getTaxTypeIntName());
+//                        idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
+//                        idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
+//                        taxSchemeCommonAggregate = new TaxSchemeCommonAggregate();
+//                        taxSchemeCommonAggregate.setID(idCommonBasic);
+//                    }
+//
+//                    taxCategoryType.setTaxScheme(taxSchemeCommonAggregate);               
 
-                    percentCommonBasic = new PercentCommonBasic();
-                    percentCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceLineItemDTO.getTaxPercent()));
-                    taxCategoryType.setPercent(percentCommonBasic);
-
-                    if (!StringUtils.isEmpty(invoiceLineItemDTO.getTaxTypeIntName())) {
-
-                        idCommonBasic = new IDCommonBasic();
-                        idCommonBasic.setValue(invoiceLineItemDTO.getTaxTypeIntName());
-                        idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
-                        idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
-                        taxSchemeCommonAggregate = new TaxSchemeCommonAggregate();
-                        taxSchemeCommonAggregate.setID(idCommonBasic);
-                    }
-
-                    taxCategoryType.setTaxScheme(taxSchemeCommonAggregate);
                     nameCommonBasic = new NameCommonBasic();
                     nameCommonBasic.setValue(invoiceLineItemDTO.getProductName());
                     itemType.setName(nameCommonBasic);
@@ -1532,9 +1544,9 @@ public class UblOrderUtils {
                         itemIdentificationType.setID(idCommonBasic);
                         itemType.setSellersItemIdentification(itemIdentificationType);
                     }
-                } else {
-                    throw new RuntimeException("TaxPercent can't be Null value");
-                }
+            //    } else {
+            //        throw new RuntimeException("TaxPercent can't be Null value");
+            //    }
 
                 if (invoiceLineItemDTO.getUnitPrice() != null) {
 
@@ -1821,19 +1833,17 @@ public class UblOrderUtils {
                     invoiceLineItemDTO.setTotalExcTax(lineExtensionAmount.getValue().doubleValue());
                 }
 
-                taxTotals = lineItem.getTaxTotals();
-                if (taxTotals != null) {
-
-                    for (TaxTotalType taxTotalType : taxTotals) {
-                        taxAmountCommonBasic = taxTotalType.getTaxAmount();
-                        if (taxAmountCommonBasic != null && taxAmountCommonBasic.getValue() != null) {
-                            invoiceLineItemDTO.setTaxAmount(taxAmountCommonBasic.getValue().doubleValue());
-                        }
-                    }
-                }
+//                taxTotals = lineItem.getTaxTotals();
+//                if (taxTotals != null) {
+//
+//                    for (TaxTotalType taxTotalType : taxTotals) {
+//                        taxAmountCommonBasic = taxTotalType.getTaxAmount();
+//                        if (taxAmountCommonBasic != null && taxAmountCommonBasic.getValue() != null) {
+//                            invoiceLineItemDTO.setTaxAmount(taxAmountCommonBasic.getValue().doubleValue());
+//                        }
+//                    }
+//                }
                 
-                
-
                 allowanceCharges = lineItem.getAllowanceCharges();
                 if (allowanceCharges != null && !allowanceCharges.isEmpty()) {
 
