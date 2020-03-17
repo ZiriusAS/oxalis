@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Context path="/oxalis-service">
-  <ResourceLink global="jdbc/zap" name="jdbc/zap" type="javax.sql.DataSource"/>
+<Context>
+    <ResourceLink name="jdbc/zap" global="jdbc/zap" type="javax.sql.DataSource" />
 </Context>
