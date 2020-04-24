@@ -153,6 +153,7 @@ public class OutboundService extends BaseService{
             String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
             PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
             byte[] contentWrapedWithSbdh = obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
+            File evidence = null;
 
             if(testEnvironment) {
 
@@ -166,7 +167,7 @@ public class OutboundService extends BaseService{
                 TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
                 
                 transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
-                File evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
+                evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
                 
                 try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
                     
@@ -183,7 +184,7 @@ public class OutboundService extends BaseService{
                     TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
                     transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
                     
-                    File evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
+                    evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
                     
                 
                     try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
@@ -197,7 +198,7 @@ public class OutboundService extends BaseService{
             }
 
             LOGGER.info(String.format(" Send Document : SUCCESS \n Transmission Id : %s \n Sender : %s \n Receiver : %s", transmissionIdentifier, documentDTO.getSenderId(), documentDTO.getReceiverId()));
-            putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, null);
+            putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, evidence.getName());
 
         } catch(HTTPException | OxalisException | NoSuchAlgorithmException | PeppolSecurityException e) {
 
@@ -956,8 +957,8 @@ public class OutboundService extends BaseService{
             audit.setStatus(1);
         } else {
             audit.setStatus(0);
-            audit.setComments(exceptionMsg);
         }
+        audit.setComments(exceptionMsg);
         audit.setSenderId(documentDTO.getSenderId());
         audit.setReceiverId(documentDTO.getReceiverId());
         if (isResendInvoice) {
