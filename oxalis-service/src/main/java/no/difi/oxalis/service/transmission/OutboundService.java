@@ -16,6 +16,7 @@ import eu.peppol.outbound.api.MessageRemoverDTO;
 import eu.peppol.outbound.api.UserDTO;
 import eu.peppol.outbound.api.UserRole;
 import eu.sendregning.oxalis.CustomMain;
+import eu.sendregning.oxalis.TransmissionParameters;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,8 +36,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import javax.xml.ws.http.HTTPException;
+import no.difi.oxalis.api.evidence.EvidenceFactory;
 import no.difi.oxalis.api.lang.OxalisException;
 import no.difi.oxalis.api.lookup.LookupService;
+import no.difi.oxalis.api.outbound.TransmissionResponse;
 import no.difi.oxalis.outbound.OxalisOutboundComponent;
 import no.difi.oxalis.service.bo.AuditLogBO;
 import no.difi.oxalis.service.bo.OutboundBO;
@@ -74,6 +77,7 @@ public class OutboundService extends BaseService{
     private static String followUpMsgDir;
     private static final String XML_EXT = "xml";
     private static final String[] EXT_ARR = {XML_EXT};
+    private static String evidencePath = "";
     
     private static String DS_NAME="";
     
@@ -82,8 +86,8 @@ public class OutboundService extends BaseService{
     
     private static final Logger LOGGER = LoggerFactory.getLogger(OutboundService.class);
 
-    
     protected OutboundService() {
+        
     }
 
     public static OutboundService getInstance() {
@@ -128,6 +132,8 @@ public class OutboundService extends BaseService{
             outboundMsgDir =  PropertyUtil.getProperty(Property.OUTBOUND_MESSAGE_STORE_PATH);
             followUpMsgDir =  PropertyUtil.getProperty(Property.FOLLOWUP_MESSAGE_STORE_PATH);
             DS_NAME = PropertyUtil.getProperty(Property.DATASOURCE_NAME);
+            
+            evidencePath = PropertyUtil.getProperty(Property.EVIDENCE_PATH);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -147,6 +153,7 @@ public class OutboundService extends BaseService{
             String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
             PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
             byte[] contentWrapedWithSbdh = obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
+            File evidence = null;
 
             if(testEnvironment) {
 
@@ -157,18 +164,41 @@ public class OutboundService extends BaseService{
                     fos.write(contentWrapedWithSbdh);
                     LOGGER.info(" --- Temp File generated for Testing " + testFile.getName());
                 }
-                transmissionIdentifier =  obj.send(testFile.getPath());
+                TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
+                
+                transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+                evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
+                
+                try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
+                    
+                    getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
+                }
+                
+                // move to actual location
+                evidence.renameTo(new File(evidencePath + File.separator + evidence.getName()));
             } else {
                 
                 try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
 
                     LOGGER.info(" ##### Sending Document : PRODUCTION #####");
-                    transmissionIdentifier = obj.sendDocumentUsingFactory(inputStream);
+                    TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
+                    transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+                    
+                    evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
+                    
+                
+                    try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
+
+                        getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
+                    }
+                    
+                    // move to actual location
+                    evidence.renameTo(new File(evidencePath + File.separator + evidence.getName()));
                 }
             }
 
             LOGGER.info(String.format(" Send Document : SUCCESS \n Transmission Id : %s \n Sender : %s \n Receiver : %s", transmissionIdentifier, documentDTO.getSenderId(), documentDTO.getReceiverId()));
-            putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, null);
+            putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, evidence.getName());
 
         } catch(HTTPException | OxalisException | NoSuchAlgorithmException | PeppolSecurityException e) {
 
@@ -927,8 +957,8 @@ public class OutboundService extends BaseService{
             audit.setStatus(1);
         } else {
             audit.setStatus(0);
-            audit.setComments(exceptionMsg);
         }
+        audit.setComments(exceptionMsg);
         audit.setSenderId(documentDTO.getSenderId());
         audit.setReceiverId(documentDTO.getReceiverId());
         if (isResendInvoice) {

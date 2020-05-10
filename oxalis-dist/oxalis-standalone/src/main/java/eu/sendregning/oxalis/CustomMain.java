@@ -124,7 +124,7 @@ public class CustomMain {
         return sbdh;
     }
     
-    public String send(String filepath) throws Exception {
+    public TransmissionResponse send(String filepath) throws Exception {
 
     	Span span = null;
         try {
@@ -151,7 +151,7 @@ public class CustomMain {
 
             TransmissionResponse response = transmitter.transmit(transmissionRequest, span);
 
-            return response.getTransmissionIdentifier().getIdentifier();
+            return response;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -161,7 +161,7 @@ public class CustomMain {
         }
     }
     
-    public String sendDocumentUsingFactory(InputStream inputStream) throws Exception {
+    public TransmissionResponse sendDocumentUsingFactory(InputStream inputStream) throws Exception {
 
         Span span = null;
         if (inputStream != null) {
@@ -175,7 +175,7 @@ public class CustomMain {
         				.getTransmissionService()
         				.send(inputStream, params.getTag(), span);
         		
-                return transmissionResponse.getTransmissionIdentifier().getIdentifier();
+                return transmissionResponse;
             	
             } catch (Exception e) {
                 e.printStackTrace();
