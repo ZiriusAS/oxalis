@@ -31,6 +31,7 @@ public class InvoiceDTO extends BaseDTO {
     private String orderReferenceId;
     private String purchaseOrderNo;
     private String buyerReference;
+    private String projectReference;
     private Date issueDate;
     private Date paymentDueDate;
     private Date periodStartDate;
@@ -429,4 +430,13 @@ public class InvoiceDTO extends BaseDTO {
     public void setPeriodEndDate(Date periodEndDate) {
         this.periodEndDate = periodEndDate;
     }
+
+    public String getProjectReference() {
+        return projectReference;
+    }
+
+    public void setProjectReference(String projectReference) {
+        this.projectReference = projectReference;
+    }
+    
 }

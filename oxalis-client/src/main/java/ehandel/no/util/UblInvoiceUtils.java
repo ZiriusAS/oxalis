@@ -118,6 +118,7 @@ import ehandel.no.ehf.invoice.PostboxCommonBasic;
 import ehandel.no.ehf.invoice.PriceAmountCommonBasic;
 import ehandel.no.ehf.invoice.PriceTypeCommonAggregate;
 import ehandel.no.ehf.invoice.ProfileIDCommonBasic;
+import ehandel.no.ehf.invoice.ProjectReferenceCommonAggregate;
 import ehandel.no.ehf.invoice.RegistrationNameCommonBasic;
 import ehandel.no.ehf.invoice.SourceCurrencyBaseRateCommonBasic;
 import ehandel.no.ehf.invoice.SourceCurrencyCodeCommonBasic;
@@ -359,6 +360,18 @@ public final class UblInvoiceUtils {
                 BuyerReferenceCommonBasic buyerRef = new BuyerReferenceCommonBasic();
                 buyerRef.setValue(invoiceDTO.getBuyerReference());
                 invoice.setBuyerReference(buyerRef);
+            }
+            
+            // project reference 
+            if (!StringUtils.isEmpty(invoiceDTO.getProjectReference())) {
+                
+                ProjectReferenceCommonAggregate prca = new ProjectReferenceCommonAggregate();
+                
+                IDCommonBasic projectReferenceId = new IDCommonBasic();
+                projectReferenceId.setValue(invoiceDTO.getProjectReference());
+                prca.setID(projectReferenceId);
+                
+                invoice.getProjectReferences().add(prca);
             }
 
             //set contract
@@ -2135,6 +2148,14 @@ public final class UblInvoiceUtils {
                 }
 
                 invoiceDTO.setContractDTO(contractDTO);
+            }
+            
+            if(invoice.getProjectReferences() != null && !invoice.getProjectReferences().isEmpty()) {
+                
+                IDCommonBasic projectReferenceId = invoice.getProjectReferences().get(0).getID();
+                
+                if(projectReferenceId != null)
+                invoiceDTO.setProjectReference(projectReferenceId.getValue());
             }
 
             List<DocumentReferenceType> additionalDocumentReferences =
