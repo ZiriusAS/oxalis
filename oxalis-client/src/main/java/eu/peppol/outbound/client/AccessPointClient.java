@@ -43,6 +43,9 @@ import eu.peppol.outbound.api.MessageListDTO;
 import eu.peppol.outbound.api.MessageRemoverDTO;
 import eu.peppol.outbound.api.UserDTO;
 import java.net.URLEncoder;
+import org.apache.commons.httpclient.params.HttpParams;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.params.CoreConnectionPNames;
 
 /**
  * Utility class to access outbound services via http client.
@@ -122,6 +125,16 @@ public final class AccessPointClient {
         httpClient.getState().setCredentials(
                 new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, REALM_NAME),
                 new UsernamePasswordCredentials(userName, password));
+        
+        int timeout = 60 * 30; // minutes
+        
+        HttpParams httpParams = httpClient.getParams();
+        httpParams.setParameter(
+                CoreConnectionPNames.CONNECTION_TIMEOUT, timeout * 1000);
+        httpParams.setParameter(
+          CoreConnectionPNames.SO_TIMEOUT, timeout * 1000);
+        httpParams.setParameter(
+                ClientPNames.CONN_MANAGER_TIMEOUT, new Long(timeout * 1000));
 
         return httpClient;
     }
