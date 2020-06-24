@@ -359,7 +359,7 @@ public final class UblCreditNoteUtils {
                     attachmentType.setEmbeddedDocumentBinaryObject(embeddedDocBinObjCommonBasic);
                     documentReferenceType.setAttachment(attachmentType);
                     
-                    if (fileDTO.getDocumentTypeCode() != null) {                        
+                    if (fileDTO.getDocumentTypeCode() != null && !fileDTO.getDocumentTypeCode().equals("130")) {                        
                         DocumentTypeCodeCommonBasic documentTypeCode = new DocumentTypeCodeCommonBasic();
                         documentTypeCode.setValue(fileDTO.getDocumentTypeCode());
                         documentReferenceType.setDocumentTypeCode(documentTypeCode);

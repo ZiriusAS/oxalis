@@ -31,7 +31,9 @@ public enum Property {
     
     FOLLOWUP_MESSAGE_STORE_PATH("oxalis.followup.message.store"),
     
-    EVIDENCE_PATH("evidence.path");
+    EVIDENCE_PATH("evidence.path"),
+    
+    VALIDATOR_URL("validator.url");
     
     protected String propertyName;
 
