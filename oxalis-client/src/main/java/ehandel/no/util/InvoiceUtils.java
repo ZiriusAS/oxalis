@@ -1655,6 +1655,7 @@ public final class InvoiceUtils {
             ehandel.no.invoice.OrderLineReferenceCommonAggregate orderLineReferenceCommonAggregate =
                     null;
             ehandel.no.invoice.ItemIdentificationType sellersItemIdentification = null;
+            ehandel.no.invoice.ItemIdentificationType buyersItemIdentification = null;
             ehandel.no.invoice.TaxCategoryType taxCategoryType = null;
             ehandel.no.invoice.PriceType price = null;
             ehandel.no.invoice.MonetaryTotalType monetaryTotalType = null;
@@ -1716,6 +1717,15 @@ public final class InvoiceUtils {
                 sellersItemIdentification.setID(idCommonBasic);
                 item = new ehandel.no.invoice.ItemCommonAggregate();
                 item.setSellersItemIdentification(sellersItemIdentification);
+                
+                if(!StringUtils.isEmpty(invoiceLineItemDTO.getBuyersItemId())) {
+                    
+                    idCommonBasic = new ehandel.no.invoice.IDCommonBasic();
+                    idCommonBasic.setValue(invoiceLineItemDTO.getBuyersItemId());
+                    buyersItemIdentification = new ehandel.no.invoice.ItemIdentificationType();
+                    buyersItemIdentification.setID(idCommonBasic);
+                    item.setBuyersItemIdentification(buyersItemIdentification);
+                }
 
                 nameCommonBasic = new ehandel.no.invoice.NameCommonBasic();
                 nameCommonBasic.setValue(invoiceLineItemDTO.getProductName());
@@ -1728,7 +1738,15 @@ public final class InvoiceUtils {
                 }
 
                 lineIDCommonBasic = new ehandel.no.invoice.LineIDCommonBasic();
-                lineIDCommonBasic.setValue(String.valueOf(++i));
+                if(invoiceLineItemDTO.getInvoiceLineReference() != null 
+                        && !invoiceLineItemDTO.getInvoiceLineReference().isEmpty()) {
+                    
+                    lineIDCommonBasic.setValue(invoiceLineItemDTO.getInvoiceLineReference());
+                } else {
+                    
+                    lineIDCommonBasic.setValue(String.valueOf(++i));
+                }
+                
                 orderLineReferenceCommonAggregate =
                         new ehandel.no.invoice.OrderLineReferenceCommonAggregate();
                 orderLineReferenceCommonAggregate.setLineID(lineIDCommonBasic);
@@ -3263,6 +3281,17 @@ public final class InvoiceUtils {
             for (ehandel.no.invoice.InvoiceLineCommonAggregate invoiceLine : invoiceLineItems) {
 
                 invoiceLineItemDTO = new InvoiceLineItemDTO();
+                
+                if(invoiceLine.getOrderLineReferences() != null && 
+                        !invoiceLine.getOrderLineReferences().isEmpty()) {
+                    
+                    ehandel.no.invoice.LineIDCommonBasic lineIDCommonBasic = invoiceLine.getOrderLineReferences().get(0).getLineID();
+                    
+                    if(lineIDCommonBasic != null) {
+                        
+                       invoiceLineItemDTO.setInvoiceLineReference(lineIDCommonBasic.getValue()); 
+                    }
+                }
 
                 idCommonBasic = invoiceLine.getID();
                 if (idCommonBasic != null && idCommonBasic.getValue() != null) {
@@ -3281,6 +3310,14 @@ public final class InvoiceUtils {
                         idCommonBasic = itemIdentificationType.getID();
                         if (idCommonBasic != null && idCommonBasic.getValue() != null) {
                             invoiceLineItemDTO.setProductNo(idCommonBasic.getValue());
+                        }
+                    }
+                    
+                    itemIdentificationType = itemCommonAggregate.getBuyersItemIdentification();
+                    if (itemIdentificationType != null) {
+                        idCommonBasic = itemIdentificationType.getID();
+                        if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                            invoiceLineItemDTO.setBuyersItemId(idCommonBasic.getValue());
                         }
                     }
                 }
@@ -5007,6 +5044,7 @@ public final class InvoiceUtils {
             TaxTotalType taxTotalCommonAggregate = null;
             OrderLineReferenceCommonAggregate orderLineReferenceCommonAggregate = null;
             ItemIdentificationType sellersItemIdentification = null;
+            ItemIdentificationType buyersItemIdentification = null;
             TaxCategoryType taxCategoryType = null;
             PriceTypeCommonAggregate price = null;
             MonetaryTotalType monetaryTotalType = null;
@@ -5066,6 +5104,15 @@ public final class InvoiceUtils {
                 sellersItemIdentification.setID(idCommonBasic);
                 item = new ItemType();
                 item.setSellersItemIdentification(sellersItemIdentification);
+                
+                if(!StringUtils.isEmpty(invoiceLineItemDTO.getBuyersItemId())) {
+                    
+                    idCommonBasic = new IDCommonBasic();
+                    idCommonBasic.setValue(invoiceLineItemDTO.getBuyersItemId());
+                    buyersItemIdentification = new ItemIdentificationType();
+                    buyersItemIdentification.setID(idCommonBasic);
+                    item.setBuyersItemIdentification(buyersItemIdentification);
+                }
 
                 nameCommonBasic = new NameCommonBasic();
                 nameCommonBasic.setValue(invoiceLineItemDTO.getProductName());
@@ -5123,7 +5170,16 @@ public final class InvoiceUtils {
                 }
 
                 lineIDCommonBasic = new LineIDCommonBasic();
-                lineIDCommonBasic.setValue(String.valueOf(++i));
+                
+                if(invoiceLineItemDTO.getInvoiceLineReference() != null 
+                        && !invoiceLineItemDTO.getInvoiceLineReference().isEmpty()) {
+                    
+                    lineIDCommonBasic.setValue(invoiceLineItemDTO.getInvoiceLineReference());
+                } else {
+                    
+                    lineIDCommonBasic.setValue(String.valueOf(++i));
+                }
+                
                 orderLineReferenceCommonAggregate = new OrderLineReferenceCommonAggregate();
                 orderLineReferenceCommonAggregate.setLineID(lineIDCommonBasic);
                 invoiceLine.getOrderLineReferences().add(orderLineReferenceCommonAggregate);
@@ -6768,6 +6824,17 @@ public final class InvoiceUtils {
             for (InvoiceLineType invoiceLine : invoiceLineItems) {
 
                 invoiceLineItemDTO = new InvoiceLineItemDTO();
+                
+                if(invoiceLine.getOrderLineReferences() != null && 
+                        !invoiceLine.getOrderLineReferences().isEmpty()) {
+                    
+                    LineIDCommonBasic lineIDCommonBasic = invoiceLine.getOrderLineReferences().get(0).getLineID();
+                    
+                    if(lineIDCommonBasic != null) {
+                        
+                       invoiceLineItemDTO.setInvoiceLineReference(lineIDCommonBasic.getValue()); 
+                    }
+                }
 
                 idCommonBasic = invoiceLine.getID();
                 if (idCommonBasic != null && idCommonBasic.getValue() != null) {
@@ -6816,6 +6883,14 @@ public final class InvoiceUtils {
                         idCommonBasic = itemIdentificationType.getID();
                         if (idCommonBasic != null && idCommonBasic.getValue() != null) {
                             invoiceLineItemDTO.setProductNo(idCommonBasic.getValue());
+                        }
+                    }
+                    
+                    itemIdentificationType = itemCommonAggregate.getBuyersItemIdentification();
+                    if (itemIdentificationType != null) {
+                        idCommonBasic = itemIdentificationType.getID();
+                        if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                            invoiceLineItemDTO.setBuyersItemId(idCommonBasic.getValue());
                         }
                     }
                 }

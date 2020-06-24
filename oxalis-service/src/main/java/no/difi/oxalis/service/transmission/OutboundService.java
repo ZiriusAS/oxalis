@@ -15,6 +15,7 @@ import eu.peppol.outbound.api.MessageListDTO;
 import eu.peppol.outbound.api.MessageRemoverDTO;
 import eu.peppol.outbound.api.UserDTO;
 import eu.peppol.outbound.api.UserRole;
+import eu.peppol.outbound.client.EHFSchemaValidator;
 import eu.sendregning.oxalis.CustomMain;
 import eu.sendregning.oxalis.TransmissionParameters;
 import java.io.ByteArrayInputStream;
@@ -60,6 +61,8 @@ import no.difi.vefa.peppol.security.lang.PeppolSecurityException;
 import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +81,7 @@ public class OutboundService extends BaseService{
     private static final String XML_EXT = "xml";
     private static final String[] EXT_ARR = {XML_EXT};
     private static String evidencePath = "";
+    private static String validatorURL = "";
     
     private static String DS_NAME="";
     
@@ -134,6 +138,7 @@ public class OutboundService extends BaseService{
             DS_NAME = PropertyUtil.getProperty(Property.DATASOURCE_NAME);
             
             evidencePath = PropertyUtil.getProperty(Property.EVIDENCE_PATH);
+            validatorURL = PropertyUtil.getProperty(Property.VALIDATOR_URL);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -142,7 +147,23 @@ public class OutboundService extends BaseService{
     
      public String sendDocument(DocumentDTO documentDTO, String userId, boolean isResendDocument) throws IOException,
             ClassNotFoundException, Exception {
-
+         
+         // perform a validation 
+         EHFSchemaValidator.setClientUrl(validatorURL);
+         
+         String validatorResult = EHFSchemaValidator.validateEhfXml(IOUtils.toString(documentDTO.getFileData(), CharEncoding.UTF_8));
+         boolean valid = true;
+         try {
+            
+             valid = isValidEHF(validatorResult);
+         } catch (Exception ex) {
+             throw new RuntimeException("Unable to validate Document",ex);
+         }
+         
+         if(!valid) { 
+             throw new RuntimeException("Invalid Document");
+         }
+         
         File testFile = null;
         eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
         
@@ -221,6 +242,28 @@ public class OutboundService extends BaseService{
         }
         return transmissionIdentifier;
     }
+     
+    private boolean isValidEHF(String jsonString) {
+
+        try {
+
+            JSONArray result = new JSONArray(jsonString.trim());
+            if (result != null) {
+
+                for (int i = 0; i < result.length(); i++) {
+                    JSONObject section = (JSONObject) result.get(i);
+                    if (section.get("flag") != null
+                            && (section.get("flag").toString().toUpperCase().contains("ERROR")
+                                    || section.get("flag").toString().toUpperCase().contains("FATAL"))) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    } 
      
     private String identifyDocumentTypeFromContent(byte[] documentContent) {
         

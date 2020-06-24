@@ -52,6 +52,8 @@ public class InvoiceLineItemDTO extends BaseDTO {
     private Date periodStartDate;
     private Date periodEndDate;
     private List<BillingReferenceDTO> billingReferenceDTOs;
+    private String InvoiceLineReference;
+    private String buyersItemId;
 
     public String getId() {
         return id;
@@ -292,4 +294,21 @@ public class InvoiceLineItemDTO extends BaseDTO {
     public void setBillingReferenceDTOs(List<BillingReferenceDTO> billingReferenceDTOs) {
         this.billingReferenceDTOs = billingReferenceDTOs;
     }
+
+    public String getInvoiceLineReference() {
+        return InvoiceLineReference;
+    }
+
+    public void setInvoiceLineReference(String InvoiceLineReference) {
+        this.InvoiceLineReference = InvoiceLineReference;
+    }
+
+    public String getBuyersItemId() {
+        return buyersItemId;
+    }
+
+    public void setBuyersItemId(String buyersItemId) {
+        this.buyersItemId = buyersItemId;
+    }
+    
 }

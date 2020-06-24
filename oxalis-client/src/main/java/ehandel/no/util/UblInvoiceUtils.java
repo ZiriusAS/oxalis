@@ -426,7 +426,7 @@ public final class UblInvoiceUtils {
                     attachmentType.setEmbeddedDocumentBinaryObject(embeddedDocBinObjCommonBasic);
                     documentReferenceType.setAttachment(attachmentType);
                     
-                    if (fileDTO.getDocumentTypeCode() != null) {                        
+                    if (fileDTO.getDocumentTypeCode() != null && !fileDTO.getDocumentTypeCode().equals("130")) {                        
                         DocumentTypeCodeCommonBasic documentTypeCode = new DocumentTypeCodeCommonBasic();
                         documentTypeCode.setValue(fileDTO.getDocumentTypeCode());
                         documentReferenceType.setDocumentTypeCode(documentTypeCode);
@@ -1442,6 +1442,7 @@ public final class UblInvoiceUtils {
             TaxTotalType taxTotalCommonAggregate = null;
             OrderLineReferenceCommonAggregate orderLineReferenceCommonAggregate = null;
             ItemIdentificationType sellersItemIdentification = null;
+            ItemIdentificationType buyersItemIdentification = null;
             TaxCategoryType taxCategoryType = null;
             PriceTypeCommonAggregate price = null;
             MonetaryTotalType monetaryTotalType = null;
@@ -1501,6 +1502,15 @@ public final class UblInvoiceUtils {
                 sellersItemIdentification.setID(idCommonBasic);
                 item = new ItemType();
                 item.setSellersItemIdentification(sellersItemIdentification);
+                
+                if(!StringUtils.isEmpty(invoiceLineItemDTO.getBuyersItemId())) {
+                    
+                    idCommonBasic = new IDCommonBasic();
+                    idCommonBasic.setValue(invoiceLineItemDTO.getBuyersItemId());
+                    buyersItemIdentification = new ItemIdentificationType();
+                    buyersItemIdentification.setID(idCommonBasic);
+                    item.setBuyersItemIdentification(buyersItemIdentification);
+                }
 
                 nameCommonBasic = new NameCommonBasic();
                 nameCommonBasic.setValue(invoiceLineItemDTO.getProductName());
@@ -1557,8 +1567,18 @@ public final class UblInvoiceUtils {
                     invoiceLine.getInvoicePeriods().add(periodType);
                 }
 
+                
                 lineIDCommonBasic = new LineIDCommonBasic();
-                lineIDCommonBasic.setValue(String.valueOf(++i));
+                
+                if(invoiceLineItemDTO.getInvoiceLineReference() != null 
+                        && !invoiceLineItemDTO.getInvoiceLineReference().isEmpty()) {
+                    
+                    lineIDCommonBasic.setValue(invoiceLineItemDTO.getInvoiceLineReference());
+                } else {
+                    
+                    lineIDCommonBasic.setValue(String.valueOf(++i));
+                }
+                
                 orderLineReferenceCommonAggregate = new OrderLineReferenceCommonAggregate();
                 orderLineReferenceCommonAggregate.setLineID(lineIDCommonBasic);
                 invoiceLine.getOrderLineReferences().add(orderLineReferenceCommonAggregate);
@@ -3100,6 +3120,17 @@ public final class UblInvoiceUtils {
             for (InvoiceLineType invoiceLine : invoiceLineItems) {
 
                 invoiceLineItemDTO = new InvoiceLineItemDTO();
+                
+                if(invoiceLine.getOrderLineReferences() != null && 
+                        !invoiceLine.getOrderLineReferences().isEmpty()) {
+                    
+                    LineIDCommonBasic lineIDCommonBasic = invoiceLine.getOrderLineReferences().get(0).getLineID();
+                    
+                    if(lineIDCommonBasic != null) {
+                        
+                       invoiceLineItemDTO.setInvoiceLineReference(lineIDCommonBasic.getValue()); 
+                    }
+                }
 
                 idCommonBasic = invoiceLine.getID();
                 if (idCommonBasic != null && idCommonBasic.getValue() != null) {
@@ -3148,6 +3179,14 @@ public final class UblInvoiceUtils {
                         idCommonBasic = itemIdentificationType.getID();
                         if (idCommonBasic != null && idCommonBasic.getValue() != null) {
                             invoiceLineItemDTO.setProductNo(idCommonBasic.getValue());
+                        }
+                    }
+                    
+                    itemIdentificationType = itemCommonAggregate.getBuyersItemIdentification();
+                    if (itemIdentificationType != null) {
+                        idCommonBasic = itemIdentificationType.getID();
+                        if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                            invoiceLineItemDTO.setBuyersItemId(idCommonBasic.getValue());
                         }
                     }
                 }
