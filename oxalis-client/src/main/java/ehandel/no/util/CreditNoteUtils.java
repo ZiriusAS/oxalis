@@ -89,11 +89,13 @@ import ehandel.no.ehf.creditnote.IssueDateCommonBasic;
 import ehandel.no.ehf.creditnote.ItemIdentificationType;
 import ehandel.no.ehf.creditnote.ItemType;
 import ehandel.no.ehf.creditnote.LineExtensionAmountCommonBasic;
+import ehandel.no.ehf.creditnote.LineIDCommonBasic;
 import ehandel.no.ehf.creditnote.LocationType;
 import ehandel.no.ehf.creditnote.MathematicOperatorCodeCommonBasic;
 import ehandel.no.ehf.creditnote.MonetaryTotalType;
 import ehandel.no.ehf.creditnote.NameCommonBasic;
 import ehandel.no.ehf.creditnote.NoteCommonBasic;
+import ehandel.no.ehf.creditnote.OrderLineReferenceCommonAggregate;
 import ehandel.no.ehf.creditnote.OrderReferenceCommonAggregate;
 import ehandel.no.ehf.creditnote.PartyIdentificationCommonAggregate;
 import ehandel.no.ehf.creditnote.PartyLegalEntityCommonAggregate;
@@ -975,6 +977,7 @@ public final class CreditNoteUtils {
             ehandel.no.creditnote.PayableRoundingAmountCommonBasic payableRoundingAmountCommonBasic =
                     null;
             ehandel.no.creditnote.NoteCommonBasic noteCommonBasic = null;
+            ehandel.no.creditnote.ItemIdentificationType buyersItemIdentification = null;
 
             String currencyCode = null;
             CurrencyDTO currencyDTO = invoiceDTO.getCurrencyDTO();
@@ -988,7 +991,7 @@ public final class CreditNoteUtils {
                     continue;
                 }
                 creditNoteLine = new ehandel.no.creditnote.CreditNoteLineCommonAggregate();
-
+                
                 if (!StringUtils.isEmpty(creditNoteLineItemDTO.getId())) {
                     idCommonBasic = new ehandel.no.creditnote.IDCommonBasic();
                     idCommonBasic.setValue(creditNoteLineItemDTO.getId());
@@ -1011,10 +1014,19 @@ public final class CreditNoteUtils {
                 item = new ehandel.no.creditnote.ItemCommonAggregate();
                 item.setSellersItemIdentification(sellersItemIdentification);
 
+                if(!StringUtils.isEmpty(creditNoteLineItemDTO.getBuyersItemId())) {
+
+                    idCommonBasic = new ehandel.no.creditnote.IDCommonBasic();
+                    idCommonBasic.setValue(creditNoteLineItemDTO.getBuyersItemId());
+                    buyersItemIdentification = new ehandel.no.creditnote.ItemIdentificationType();
+                    buyersItemIdentification.setID(idCommonBasic);
+                    item.setBuyersItemIdentification(buyersItemIdentification);
+                }
+
                 nameCommonBasic = new ehandel.no.creditnote.NameCommonBasic();
                 nameCommonBasic.setValue(creditNoteLineItemDTO.getProductName());
                 item.setName(nameCommonBasic);
-
+                
                 if (!StringUtils.isEmpty(creditNoteLineItemDTO.getAccountingCode())) {
                     accountingCostCommonBasic =
                             new ehandel.no.creditnote.AccountingCostCommonBasic();
@@ -1933,7 +1945,7 @@ public final class CreditNoteUtils {
             for (ehandel.no.creditnote.CreditNoteLineCommonAggregate creditNoteLine : creditNoteLineItems) {
 
                 creditNoteLineItemDTO = new InvoiceLineItemDTO();
-
+                
                 idCommonBasic = creditNoteLine.getID();
                 if (idCommonBasic != null && idCommonBasic.getValue() != null) {
                     creditNoteLineItemDTO.setId(idCommonBasic.getValue());
@@ -2028,6 +2040,14 @@ public final class CreditNoteUtils {
                         if (taxAmountCommonBasic != null && taxAmountCommonBasic.getValue() != null) {
                             creditNoteLineItemDTO.setTaxAmount(taxAmountCommonBasic.getValue().doubleValue());
                         }
+                    }
+                }
+
+                itemIdentificationType = itemCommonAggregate.getBuyersItemIdentification();
+                if (itemIdentificationType != null) {
+                    idCommonBasic = itemIdentificationType.getID();
+                    if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                        creditNoteLineItemDTO.setBuyersItemId(idCommonBasic.getValue());
                     }
                 }
 
@@ -3127,6 +3147,9 @@ public final class CreditNoteUtils {
             BaseQuantityCommonBasic baseQuantityCommonBasic = null;
             PayableRoundingAmountCommonBasic payableRoundingAmountCommonBasic = null;
             NoteCommonBasic noteCommonBasic = null;
+            ItemIdentificationType buyersItemIdentification = null;
+            OrderLineReferenceCommonAggregate orderLineReferenceCommonAggregate = null;
+            LineIDCommonBasic lineIDCommonBasic = null;
 
             String currencyCode = null;
             CurrencyDTO currencyDTO = invoiceDTO.getCurrencyDTO();
@@ -3134,12 +3157,27 @@ public final class CreditNoteUtils {
                 currencyCode = currencyDTO.getCurrencyCode();
             }
 
+            int i=0;
             for (InvoiceLineItemDTO creditNoteLineItemDTO : creditNoteLineItemDTOs) {
 
                 if (creditNoteLineItemDTO.getTotalExcTax() == null) {
                     continue;
                 }
                 creditNoteLine = new CreditNoteLineType();
+                
+                lineIDCommonBasic = new LineIDCommonBasic();
+                if(creditNoteLineItemDTO.getInvoiceLineReference() != null 
+                        && !creditNoteLineItemDTO.getInvoiceLineReference().isEmpty()) {
+
+                    lineIDCommonBasic.setValue(creditNoteLineItemDTO.getInvoiceLineReference());
+                } else {
+
+                    lineIDCommonBasic.setValue(String.valueOf(++i));
+                }
+
+                orderLineReferenceCommonAggregate = new OrderLineReferenceCommonAggregate();
+                orderLineReferenceCommonAggregate.setLineID(lineIDCommonBasic);
+                creditNoteLine.getOrderLineReferences().add(orderLineReferenceCommonAggregate);
 
                 if (!StringUtils.isEmpty(creditNoteLineItemDTO.getId())) {
                     idCommonBasic = new IDCommonBasic();
@@ -3162,6 +3200,15 @@ public final class CreditNoteUtils {
                 sellersItemIdentification.setID(idCommonBasic);
                 item = new ItemType();
                 item.setSellersItemIdentification(sellersItemIdentification);
+                
+                if(!StringUtils.isEmpty(creditNoteLineItemDTO.getBuyersItemId())) {
+
+                    idCommonBasic = new IDCommonBasic();
+                    idCommonBasic.setValue(creditNoteLineItemDTO.getBuyersItemId());
+                    buyersItemIdentification = new ItemIdentificationType();
+                    buyersItemIdentification.setID(idCommonBasic);
+                    item.setBuyersItemIdentification(buyersItemIdentification);
+                }
 
                 nameCommonBasic = new NameCommonBasic();
                 nameCommonBasic.setValue(creditNoteLineItemDTO.getProductName());
@@ -4607,6 +4654,17 @@ public final class CreditNoteUtils {
             for (CreditNoteLineType creditNoteLine : creditNoteLineItems) {
 
                 creditNoteLineItemDTO = new InvoiceLineItemDTO();
+                
+                if (creditNoteLine.getOrderLineReferences() != null
+                        && !creditNoteLine.getOrderLineReferences().isEmpty()) {
+
+                    LineIDCommonBasic lineIDCommonBasic = creditNoteLine.getOrderLineReferences().get(0).getLineID();
+
+                    if (lineIDCommonBasic != null) {
+
+                        creditNoteLineItemDTO.setInvoiceLineReference(lineIDCommonBasic.getValue());
+                    }
+                }
 
                 BillingReferenceDTO billingReferenceDTO = null;
                 List<BillingReferenceDTO> billingReferenceDTOs = new ArrayList<BillingReferenceDTO>();
@@ -4792,6 +4850,14 @@ public final class CreditNoteUtils {
                             }
                             creditNoteLineItemDTO.getAllowanceCharges().add(allowanceChargeDTO);
                         }
+                    }
+                }
+                
+                itemIdentificationType = itemCommonAggregate.getBuyersItemIdentification();
+                if (itemIdentificationType != null) {
+                    idCommonBasic = itemIdentificationType.getID();
+                    if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                        creditNoteLineItemDTO.setBuyersItemId(idCommonBasic.getValue());
                     }
                 }
 

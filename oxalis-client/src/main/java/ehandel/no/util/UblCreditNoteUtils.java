@@ -137,7 +137,10 @@ import ehandel.no.ehf.creditnote.TransactionCurrencyTaxAmountCommonBasic;
 import ehandel.no.ehf.creditnote.UBLVersionIDCommonBasic;
 import ehandel.no.ehf.creditnote.WebsiteURICommonBasic;
 import ehandel.no.ehf.creditnote.BuyerReferenceCommonBasic;
+import ehandel.no.ehf.creditnote.LineIDCommonBasic;
+import ehandel.no.ehf.creditnote.OrderLineReferenceCommonAggregate;
 import ehandel.no.ehf.creditnote.PaymentTermsType;
+import ehandel.no.ehf.creditnote.ProjectReferenceCommonAggregate;
 import java.util.stream.Collectors;
 import javax.xml.bind.PropertyException;
 
@@ -294,7 +297,7 @@ public final class UblCreditNoteUtils {
                 buyerRef.setValue(invoiceDTO.getBuyerReference());
                 creditNote.setBuyerReference(buyerRef);
             }
-
+            
             //set contract
             ContractDTO contractDTO = invoiceDTO.getContractDTO();
             if (contractDTO != null) {
@@ -1146,6 +1149,9 @@ public final class UblCreditNoteUtils {
             BaseQuantityCommonBasic baseQuantityCommonBasic = null;
             PayableRoundingAmountCommonBasic payableRoundingAmountCommonBasic = null;
             NoteCommonBasic noteCommonBasic = null;
+            ItemIdentificationType buyersItemIdentification = null;
+            OrderLineReferenceCommonAggregate orderLineReferenceCommonAggregate = null;
+            LineIDCommonBasic lineIDCommonBasic = null;
 
             String currencyCode = null;
             CurrencyDTO currencyDTO = invoiceDTO.getCurrencyDTO();
@@ -1153,12 +1159,27 @@ public final class UblCreditNoteUtils {
                 currencyCode = currencyDTO.getCurrencyCode();
             }
 
+            int i=0;
             for (InvoiceLineItemDTO creditNoteLineItemDTO : creditNoteLineItemDTOs) {
 
                 if (creditNoteLineItemDTO.getTotalExcTax() == null) {
                     continue;
                 }
                 creditNoteLine = new CreditNoteLineType();
+                
+                lineIDCommonBasic = new LineIDCommonBasic();
+                if(creditNoteLineItemDTO.getInvoiceLineReference() != null 
+                        && !creditNoteLineItemDTO.getInvoiceLineReference().isEmpty()) {
+
+                    lineIDCommonBasic.setValue(creditNoteLineItemDTO.getInvoiceLineReference());
+                } else {
+
+                    lineIDCommonBasic.setValue(String.valueOf(++i));
+                }
+                
+                orderLineReferenceCommonAggregate = new OrderLineReferenceCommonAggregate();
+                orderLineReferenceCommonAggregate.setLineID(lineIDCommonBasic);
+                creditNoteLine.getOrderLineReferences().add(orderLineReferenceCommonAggregate);
 
                 if (!StringUtils.isEmpty(creditNoteLineItemDTO.getId())) {
                     idCommonBasic = new IDCommonBasic();
@@ -1181,6 +1202,15 @@ public final class UblCreditNoteUtils {
                 sellersItemIdentification.setID(idCommonBasic);
                 item = new ItemType();
                 item.setSellersItemIdentification(sellersItemIdentification);
+                
+                if(!StringUtils.isEmpty(creditNoteLineItemDTO.getBuyersItemId())) {
+
+                    idCommonBasic = new IDCommonBasic();
+                    idCommonBasic.setValue(creditNoteLineItemDTO.getBuyersItemId());
+                    buyersItemIdentification = new ItemIdentificationType();
+                    buyersItemIdentification.setID(idCommonBasic);
+                    item.setBuyersItemIdentification(buyersItemIdentification);
+                }
 
                 nameCommonBasic = new NameCommonBasic();
                 nameCommonBasic.setValue(creditNoteLineItemDTO.getProductName());
@@ -2541,6 +2571,17 @@ public final class UblCreditNoteUtils {
 
                 creditNoteLineItemDTO = new InvoiceLineItemDTO();
 
+                if(creditNoteLine.getOrderLineReferences() != null && 
+                        !creditNoteLine.getOrderLineReferences().isEmpty()) {
+
+                    LineIDCommonBasic lineIDCommonBasic = creditNoteLine.getOrderLineReferences().get(0).getLineID();
+
+                    if(lineIDCommonBasic != null) {
+
+                       creditNoteLineItemDTO.setInvoiceLineReference(lineIDCommonBasic.getValue()); 
+                    }
+                }
+                
                 BillingReferenceDTO billingReferenceDTO = null;
                 List<BillingReferenceDTO> billingReferenceDTOs = new ArrayList<BillingReferenceDTO>();
                 if (creditNoteLine.getBillingReferences() != null && creditNoteLine.getBillingReferences().size() > 0) {
@@ -2716,6 +2757,14 @@ public final class UblCreditNoteUtils {
                             }
                             creditNoteLineItemDTO.getAllowanceCharges().add(allowanceChargeDTO);
                         }
+                    }
+                }
+                
+                itemIdentificationType = itemCommonAggregate.getBuyersItemIdentification();
+                if (itemIdentificationType != null) {
+                    idCommonBasic = itemIdentificationType.getID();
+                    if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                        creditNoteLineItemDTO.setBuyersItemId(idCommonBasic.getValue());
                     }
                 }
 
