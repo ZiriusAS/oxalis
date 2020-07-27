@@ -1534,7 +1534,7 @@ public final class UblCreditNoteUtils {
                     if (taxSummary.getTaxPercent() == 0 && !taxSummary.getTaxCode().equals("Z")) {
 
                         taxExemptionReasonCodeCommonBasic = new TaxExemptionReasonCodeCommonBasic();
-                        taxExemptionReasonCodeCommonBasic.setValue(EHFConstants.TAX_EXEMPTION_REASON_CODE_V3.getValue());
+                        taxExemptionReasonCodeCommonBasic.setValue(taxSummary.getTaxExcemptionReasionCode());
                         taxCategoryType.setTaxExemptionReasonCode(taxExemptionReasonCodeCommonBasic);
 
                         taxExemptionReasonCommonBasic = new TaxExemptionReasonCommonBasic();
