@@ -1424,12 +1424,19 @@ public final class UblCreditNoteUtils {
 
                     if (taxSummary.getTaxPercent() == 0 && !taxSummary.getTaxCode().equals("Z")) {
 
-                        taxExemptionReasonCodeCommonBasic = new TaxExemptionReasonCodeCommonBasic();
-                        taxExemptionReasonCodeCommonBasic.setValue(EHFConstants.TAX_EXEMPTION_REASON_CODE_V3.getValue());
-                        taxCategoryType.setTaxExemptionReasonCode(taxExemptionReasonCodeCommonBasic);
-
+                        if (taxSummary.getTaxExcemptionReasion() == null) {
+                            throw new RuntimeException("TaxExcemptionReasion can't be null when tax percent is 0 inside \"tax summary\" ");
+                        }
+                        
+                        if(taxSummary.getTaxExcemptionReasionCode() != null) {
+                            
+                            taxExemptionReasonCodeCommonBasic = new TaxExemptionReasonCodeCommonBasic();
+                            taxExemptionReasonCodeCommonBasic.setValue(taxSummary.getTaxExcemptionReasionCode());
+                            taxCategoryType.setTaxExemptionReasonCode(taxExemptionReasonCodeCommonBasic);  
+                        }
+                        
                         taxExemptionReasonCommonBasic = new TaxExemptionReasonCommonBasic();
-                        taxExemptionReasonCommonBasic.setValue(EHFConstants.TAX_EXEMPTION_REASON.getValue());
+                        taxExemptionReasonCommonBasic.setValue(taxSummary.getTaxExcemptionReasion());
                         taxCategoryType.getTaxExemptionReasons().add(taxExemptionReasonCommonBasic);
                     }
 
