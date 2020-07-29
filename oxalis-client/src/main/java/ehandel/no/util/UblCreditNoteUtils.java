@@ -819,6 +819,16 @@ public final class UblCreditNoteUtils {
                     isRegistrationAddress = true;
                 }
             }
+            
+            if (!StringUtils.isEmpty(customerDTO.getLegalName())) {
+
+                RegistrationNameCommonBasic registrationNameCB = new RegistrationNameCommonBasic();
+                registrationNameCB.setValue(customerDTO.getLegalName());
+                partyLegalEntityCommonAggregate.setRegistrationName(registrationNameCB);
+                isPartyLegalEntity = true;
+            } else {
+                throw new RuntimeException("Customer party legal name required");
+            }
 
             if (!StringUtils.isEmpty(customerDTO.getOrganizationNo())) {
                 CompanyIDCommonBasic companyIDCommonBasic = new CompanyIDCommonBasic();

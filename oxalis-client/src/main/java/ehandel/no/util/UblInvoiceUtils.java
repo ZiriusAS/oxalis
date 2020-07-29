@@ -804,7 +804,6 @@ public final class UblInvoiceUtils {
                 if (!StringUtils.isEmpty(bankAccountDTO.getiBanNo())) {
 
                     IDCommonBasic idCommonBasic = new IDCommonBasic();
-                    idCommonBasic.setSchemeID(EHFConstants.IBAN.getValue());
                     idCommonBasic.setValue(getIBAN(bankAccountDTO.getiBanNo()));
                     financialAccountTypeForIBAN.setID(idCommonBasic);
                     financialAccountTypeForIBAN.setName(nameCommonBasic);
