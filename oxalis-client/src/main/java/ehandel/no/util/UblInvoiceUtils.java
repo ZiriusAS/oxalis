@@ -1342,7 +1342,6 @@ public final class UblInvoiceUtils {
                 if (!(currencyDTO.getCurrencyCode().equalsIgnoreCase(baseCurrencyDTO.getCurrencyCode()))) {
                     TaxCurrencyCodeCommonBasic taxCurrencyCodeCommonBasic =
                             new TaxCurrencyCodeCommonBasic();
-                    taxCurrencyCodeCommonBasic.setListID(EHFConstants.DOCUMENT_CURRENCY_CODE_ID.getValue());
                     taxCurrencyCodeCommonBasic.setValue(baseCurrencyDTO.getCurrencyCode());
                     taxCurrencyCodeCommonBasic.setName(baseCurrencyDTO.getCurrencyName());
                     invoice.setTaxCurrencyCode(taxCurrencyCodeCommonBasic);
@@ -1691,7 +1690,6 @@ public final class UblInvoiceUtils {
             TaxExemptionReasonCodeCommonBasic taxExemptionReasonCodeCommonBasic = null;
             TaxTotalType taxTotalCommonAggregate = null;
             TaxSchemeCommonAggregate taxSchemeCommonAggregate = null;
-            TransactionCurrencyTaxAmountCommonBasic transactionCurrency = null;
 
             String currencyCode = null;
             CurrencyDTO currencyDTO = invoiceDTO.getCurrencyDTO();
@@ -1714,15 +1712,8 @@ public final class UblInvoiceUtils {
                 if (taxSummary.getTaxAmount() != null) {
                     taxAmountCommonBasic = new TaxAmountCommonBasic();
                     taxAmountCommonBasic.setValue(ConversionUtils.asBigDecimal(taxSummary.getTaxAmount()));
-                    taxAmountCommonBasic.setCurrencyID(currencyCode);
+                    taxAmountCommonBasic.setCurrencyID(baseCurrencyDTO.getCurrencyCode());
                     taxSubtotalCommonAggregate.setTaxAmount(taxAmountCommonBasic);
-                }
-
-                if (taxSummary.getTransactionCurrencyTaxAmount() != null) {
-                    transactionCurrency = new TransactionCurrencyTaxAmountCommonBasic();
-                    transactionCurrency.setValue(ConversionUtils.asBigDecimal(taxSummary.getTransactionCurrencyTaxAmount()));
-                    transactionCurrency.setCurrencyID(baseCurrencyDTO.getCurrencyCode());
-                    taxSubtotalCommonAggregate.setTransactionCurrencyTaxAmount(transactionCurrency);
                 }
 
                 if (taxSummary.getTaxPercent() != null) {

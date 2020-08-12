@@ -655,6 +655,8 @@ public final class UblCreditNoteUtils {
             AddressType postalAddress = new AddressType();
             PartyLegalEntityCommonAggregate partyLegalEntityCommonAggregate =
                     new PartyLegalEntityCommonAggregate();
+            PartyLegalEntityCommonAggregate payeePartyLegalEntityCommonAggregate =
+                    new PartyLegalEntityCommonAggregate();
 
             boolean isPartyLegalEntity = false;
 
@@ -834,15 +836,21 @@ public final class UblCreditNoteUtils {
                 CompanyIDCommonBasic companyIDCommonBasic = new CompanyIDCommonBasic();
                 companyIDCommonBasic.setValue(ConversionUtils.stripNonAlphaNumeric(customerDTO.getOrganizationNo()));                
                 partyLegalEntityCommonAggregate.setCompanyID(companyIDCommonBasic);
+                payeePartyLegalEntityCommonAggregate.setCompanyID(companyIDCommonBasic);
                 isPartyLegalEntity = true;
             }
 
             if (isRegistrationAddress) {
                 partyLegalEntityCommonAggregate.setRegistrationAddress(registrationAddress);
+                payeePartyLegalEntityCommonAggregate.setRegistrationAddress(registrationAddress);
             }
             if (isPartyLegalEntity || isRegistrationAddress) {
                 party.getPartyLegalEntities().add(partyLegalEntityCommonAggregate);
-                payeePartyType.getPartyLegalEntities().add(partyLegalEntityCommonAggregate);
+                
+                if(payeePartyLegalEntityCommonAggregate.getCompanyID() != null || 
+                        payeePartyLegalEntityCommonAggregate.getRegistrationAddress() != null) {
+                    payeePartyType.getPartyLegalEntities().add(payeePartyLegalEntityCommonAggregate);
+                }
             }
 
             customerPartyType.setParty(party);
@@ -1036,7 +1044,6 @@ public final class UblCreditNoteUtils {
             if (baseCurrencyDTO != null && !StringUtils.isEmpty(baseCurrencyDTO.getCurrencyCode())) {
                 TaxCurrencyCodeCommonBasic taxCurrencyCodeCommonBasic =
                         new TaxCurrencyCodeCommonBasic();
-                taxCurrencyCodeCommonBasic.setListID(EHFConstants.DOCUMENT_CURRENCY_CODE_ID.getValue());
                 taxCurrencyCodeCommonBasic.setValue(baseCurrencyDTO.getCurrencyCode());
                 taxCurrencyCodeCommonBasic.setName(baseCurrencyDTO.getCurrencyName());
                 creditNote.setTaxCurrencyCode(taxCurrencyCodeCommonBasic);
@@ -1099,7 +1106,6 @@ public final class UblCreditNoteUtils {
                 if (!StringUtils.isEmpty(creditNoteLineItemDTO.getNote())) {
                     noteCommonBasic = new NoteCommonBasic();
                     noteCommonBasic.setValue(creditNoteLineItemDTO.getNote());
-                    noteCommonBasic.setLanguageID(invoiceDTO.getLanguage());
                     creditNoteLine.getNotes().add(noteCommonBasic);
                 }
 
@@ -1382,7 +1388,6 @@ public final class UblCreditNoteUtils {
             TaxExemptionReasonCommonBasic taxExemptionReasonCommonBasic = null;
             TaxTotalType taxTotalCommonAggregate = null;
             TaxSchemeCommonAggregate taxSchemeCommonAggregate = null;
-            TransactionCurrencyTaxAmountCommonBasic transactionCurrency = null;
 
             String currencyCode = "";
             CurrencyDTO currencyDTO = invoiceDTO.getCurrencyDTO();
