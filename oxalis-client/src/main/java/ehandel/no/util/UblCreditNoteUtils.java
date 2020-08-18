@@ -526,6 +526,13 @@ public final class UblCreditNoteUtils {
                     postalAddress.setStreetName(streetNameCommonBasic);
                     isAddressAvailable = true;
                 }
+                
+                if (!StringUtils.isEmpty(addressDTO.getAdditionalStreetName())) {
+                    AdditionalStreetNameCommonBasic additionalStreetNameCommonBasic = new AdditionalStreetNameCommonBasic();
+                    additionalStreetNameCommonBasic.setValue(addressDTO.getAdditionalStreetName());
+                    postalAddress.setAdditionalStreetName(additionalStreetNameCommonBasic);
+                    isAddressAvailable = true;
+                }
 
                 if (!StringUtils.isEmpty(addressDTO.getPostalZone())) {
                     PostalZoneCommonBasic postalZoneCommonBasic = new PostalZoneCommonBasic();
@@ -758,6 +765,13 @@ public final class UblCreditNoteUtils {
                     postalAddress.setStreetName(streetNameCommonBasic);
                     isAddressAvailable = true;
                 }
+                
+                if (!StringUtils.isEmpty(addressDTO.getAdditionalStreetName())) {
+                    AdditionalStreetNameCommonBasic additionalStreetNameCommonBasic = new AdditionalStreetNameCommonBasic();
+                    additionalStreetNameCommonBasic.setValue(addressDTO.getAdditionalStreetName());
+                    postalAddress.setAdditionalStreetName(additionalStreetNameCommonBasic);
+                    isAddressAvailable = true;
+                }
 
                 if (!StringUtils.isEmpty(addressDTO.getPostalZone())) {
                     PostalZoneCommonBasic postalZoneCommonBasic = new PostalZoneCommonBasic();
@@ -971,6 +985,13 @@ public final class UblCreditNoteUtils {
                                     new StreetNameCommonBasic();
                             streetNameCommonBasic.setValue(bankAddressDTO.getStreetName());
                             bankAddress.setStreetName(streetNameCommonBasic);
+                            isFinancialAddressAvailable = true;
+                        }
+                        
+                        if (!StringUtils.isEmpty(bankAddressDTO.getAdditionalStreetName())) {
+                            AdditionalStreetNameCommonBasic additionalStreetNameCommonBasic = new AdditionalStreetNameCommonBasic();
+                            additionalStreetNameCommonBasic.setValue(bankAddressDTO.getAdditionalStreetName());
+                            bankAddress.setAdditionalStreetName(additionalStreetNameCommonBasic);
                             isFinancialAddressAvailable = true;
                         }
 
