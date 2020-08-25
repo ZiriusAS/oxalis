@@ -471,7 +471,6 @@ public final class UblInvoiceUtils {
             mapEHFV3CustomerBankAccount(invoiceDTO, invoice);
             mapEHFV3DeliveryAddress(invoiceDTO, invoice);
             mapEHFV3Currency(invoiceDTO, invoice);
-            mapEHFV3ExchangeRate(invoiceDTO, invoice);
             mapEHFV3AllowanceCharges(invoiceDTO, invoice);
             mapEHFV3InvoiceLineItems(invoiceDTO, invoice);
             mapEHFV3TaxSummaries(invoiceDTO, invoice);
@@ -660,6 +659,13 @@ public final class UblInvoiceUtils {
                     postalAddress.setStreetName(streetNameCommonBasic);
                     isAddressAvailable = true;
                 }
+                
+                if (!StringUtils.isEmpty(addressDTO.getAdditionalStreetName())) {
+                    AdditionalStreetNameCommonBasic additionalStreetNameCommonBasic = new AdditionalStreetNameCommonBasic();
+                    additionalStreetNameCommonBasic.setValue(addressDTO.getAdditionalStreetName());
+                    postalAddress.setAdditionalStreetName(additionalStreetNameCommonBasic);
+                    isAddressAvailable = true;
+                }
 
                 if (!StringUtils.isEmpty(addressDTO.getPostalZone())) {
                     PostalZoneCommonBasic postalZoneCommonBasic = new PostalZoneCommonBasic();
@@ -781,9 +787,6 @@ public final class UblInvoiceUtils {
 
         if (supplierDTO != null) {
 
-            boolean isFinancialAddressAvailable = false;
-            boolean isFinancialInstitutionAvailable = false;
-
             BankAccountDTO bankAccountDTO = supplierDTO.getBankAccountDTO();
             if (bankAccountDTO != null) {
 
@@ -795,7 +798,6 @@ public final class UblInvoiceUtils {
                 if (!StringUtils.isEmpty(bankAccountDTO.getBankAccountNumber())) {
 
                     IDCommonBasic idCommonBasic = new IDCommonBasic();
-                    idCommonBasic.setSchemeID(EHFConstants.BBAN.getValue());
                     idCommonBasic.setValue(getBBAN(bankAccountDTO.getBankAccountNumber()));
                     financialAccountTypeForBBAN.setID(idCommonBasic);
                 }
@@ -809,14 +811,10 @@ public final class UblInvoiceUtils {
                 if (!StringUtils.isEmpty(bankAccountDTO.getiBanNo())) {
 
                     IDCommonBasic idCommonBasic = new IDCommonBasic();
-                    idCommonBasic.setSchemeID(EHFConstants.IBAN.getValue());
                     idCommonBasic.setValue(getIBAN(bankAccountDTO.getiBanNo()));
                     financialAccountTypeForIBAN.setID(idCommonBasic);
                     financialAccountTypeForIBAN.setName(nameCommonBasic);
                 }
-
-                FinancialInstitutionCommonAggregate financialInstitutionCommonAggregate =
-                        new FinancialInstitutionCommonAggregate();
 
                 BranchType branchType = null;
                 if (!StringUtils.isEmpty(bankAccountDTO.getBankAccountId())) {
@@ -832,17 +830,7 @@ public final class UblInvoiceUtils {
                 }
 
                 if (branchType != null) {
-                    if (!StringUtils.isEmpty(bankAccountDTO.getBic())) {
-                        IDCommonBasic idCommonBasic = new IDCommonBasic();
-                        idCommonBasic.setValue(bankAccountDTO.getBic());
-                        idCommonBasic.setSchemeID(EHFConstants.BIC.getValue());
-                        financialInstitutionCommonAggregate.setID(idCommonBasic);
-                        isFinancialInstitutionAvailable = true;
-                    }
 
-                    if (isFinancialInstitutionAvailable) {
-                        branchType.setFinancialInstitution(financialInstitutionCommonAggregate);
-                    }
                     financialAccountTypeForBBAN.setFinancialInstitutionBranch(branchType);
                     if (!StringUtils.isEmpty(bankAccountDTO.getiBanNo())) {
                         financialAccountTypeForIBAN.setFinancialInstitutionBranch(branchType);
@@ -1021,6 +1009,13 @@ public final class UblInvoiceUtils {
                     postalAddress.setStreetName(streetNameCommonBasic);
                     isAddressAvailable = true;
                 }
+                
+                if (!StringUtils.isEmpty(addressDTO.getAdditionalStreetName())) {
+                    AdditionalStreetNameCommonBasic additionalStreetNameCommonBasic = new AdditionalStreetNameCommonBasic();
+                    additionalStreetNameCommonBasic.setValue(addressDTO.getAdditionalStreetName());
+                    postalAddress.setAdditionalStreetName(additionalStreetNameCommonBasic);
+                    isAddressAvailable = true;
+                }
 
                 if (!StringUtils.isEmpty(addressDTO.getPostalZone())) {
                     PostalZoneCommonBasic postalZoneCommonBasic = new PostalZoneCommonBasic();
@@ -1090,7 +1085,6 @@ public final class UblInvoiceUtils {
                 }
                 
                 idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
-                idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
                 taxSchemeCommonAggregate.setID(idCommonBasic);
                 partyTaxSchemeCommonAggregate.setTaxScheme(taxSchemeCommonAggregate);
                 isPartyTaxSchemeAvailable = true;
@@ -1155,8 +1149,7 @@ public final class UblInvoiceUtils {
                 }
 
                 paymentMeansCodeCommonBasic = new PaymentMeansCodeCommonBasic();
-                paymentMeansCodeCommonBasic.setValue(PaymentMeansCode.DEBIT_TRANSFER.getValue());                
-                paymentMeansCodeCommonBasic.setListAgencyID(EHFConstants.PAYMENT_MEANS_LIST_AGENCY_ID.getValue());
+                paymentMeansCodeCommonBasic.setValue(PaymentMeansCode.DEBIT_TRANSFER.getValue());
                 paymentMeansCommonAggregate.setPaymentMeansCode(paymentMeansCodeCommonBasic);
 
                 bankAccountDTO = customerDTO.getBankAccountDTO();
@@ -1221,6 +1214,13 @@ public final class UblInvoiceUtils {
                             bankAddress.setStreetName(streetNameCommonBasic);
                             isFinancialAddressAvailable = true;
                         }
+                        
+                        if (!StringUtils.isEmpty(bankAddressDTO.getAdditionalStreetName())) {
+                            AdditionalStreetNameCommonBasic additionalStreetNameCommonBasic = new AdditionalStreetNameCommonBasic();
+                            additionalStreetNameCommonBasic.setValue(bankAddressDTO.getAdditionalStreetName());
+                            bankAddress.setAdditionalStreetName(additionalStreetNameCommonBasic);
+                            isFinancialAddressAvailable = true;
+                        }
 
                         if (!StringUtils.isEmpty(bankAddressDTO.getPostalBox())) {
                             PostboxCommonBasic postboxCommonBasic = new PostboxCommonBasic();
@@ -1249,7 +1249,6 @@ public final class UblInvoiceUtils {
                             IdentificationCodeCommonBasic identificationCodeCommonBasic =
                                     new IdentificationCodeCommonBasic();
                             identificationCodeCommonBasic.setValue(bankAddressDTO.getCountryCode().toUpperCase());
-                            identificationCodeCommonBasic.setListAgencyID(EHFConstants.LIST_AGENCY_ID.getValue());
                             CountryType countryType = new CountryType();
                             countryType.setIdentificationCode(identificationCodeCommonBasic);
                             bankAddress.setCountry(countryType);
@@ -1330,7 +1329,6 @@ public final class UblInvoiceUtils {
                     IdentificationCodeCommonBasic identificationCodeCommonBasic =
                             new IdentificationCodeCommonBasic();
                     identificationCodeCommonBasic.setValue(addressDTO.getCountryCode().toUpperCase());
-                    identificationCodeCommonBasic.setListAgencyID(EHFConstants.LIST_AGENCY_ID.getValue());
                     CountryType countryType = new CountryType();
                     countryType.setIdentificationCode(identificationCodeCommonBasic);
                     deliveryAddress.setCountry(countryType);
@@ -1365,65 +1363,11 @@ public final class UblInvoiceUtils {
                 if (!(currencyDTO.getCurrencyCode().equalsIgnoreCase(baseCurrencyDTO.getCurrencyCode()))) {
                     TaxCurrencyCodeCommonBasic taxCurrencyCodeCommonBasic =
                             new TaxCurrencyCodeCommonBasic();
-                    taxCurrencyCodeCommonBasic.setListID(EHFConstants.DOCUMENT_CURRENCY_CODE_ID.getValue());
                     taxCurrencyCodeCommonBasic.setValue(baseCurrencyDTO.getCurrencyCode());
                     taxCurrencyCodeCommonBasic.setName(baseCurrencyDTO.getCurrencyName());
                     invoice.setTaxCurrencyCode(taxCurrencyCodeCommonBasic);
                 }
             }
-        }
-    }
-
-    /**
-     * Method used to map invoice exchange rate from Invoice wrapper to EHF Invoice.
-     */
-    private static void mapEHFV3ExchangeRate(InvoiceDTO invoiceDTO, Invoice invoice) {
-
-        // Set exchange rate
-        if (invoiceDTO.getExchangeRate() != null) {
-            CalculationRateCommonBasic calculationRateCommonBasic =
-                    new CalculationRateCommonBasic();
-            calculationRateCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceDTO.getExchangeRate()));
-            ExchangeRateType exchangeRateType = new ExchangeRateType();
-            exchangeRateType.setCalculationRate(calculationRateCommonBasic);
-
-            if (invoiceDTO.getCurrencyDTO() != null
-                    && !StringUtils.isEmpty(invoiceDTO.getCurrencyDTO().getCurrencyCode())) {
-                SourceCurrencyCodeCommonBasic sourceCurrencyCodeCommonBasic =
-                        new SourceCurrencyCodeCommonBasic();
-                sourceCurrencyCodeCommonBasic.setListID(EHFConstants.DOCUMENT_CURRENCY_CODE_ID.getValue());
-                sourceCurrencyCodeCommonBasic.setValue(invoiceDTO.getCurrencyDTO().getCurrencyCode());
-                exchangeRateType.setSourceCurrencyCode(sourceCurrencyCodeCommonBasic);
-            }
-
-            if (invoiceDTO.getInvoiceCurrencyBaseRate() != null) {
-                SourceCurrencyBaseRateCommonBasic sourceCurrencyBaseRateCommonBasic =
-                        new SourceCurrencyBaseRateCommonBasic();
-                sourceCurrencyBaseRateCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceDTO.getInvoiceCurrencyBaseRate()));
-                exchangeRateType.setSourceCurrencyBaseRate(sourceCurrencyBaseRateCommonBasic);
-            }
-
-            if (invoiceDTO.getBaseCurrencyDTO() != null
-                    && !StringUtils.isEmpty(invoiceDTO.getBaseCurrencyDTO().getCurrencyCode())) {
-                TargetCurrencyCodeCommonBasic targetCurrencyCodeCommonBasic =
-                        new TargetCurrencyCodeCommonBasic();
-                targetCurrencyCodeCommonBasic.setListID(EHFConstants.DOCUMENT_CURRENCY_CODE_ID.getValue());
-                targetCurrencyCodeCommonBasic.setValue(invoiceDTO.getBaseCurrencyDTO().getCurrencyCode());
-                exchangeRateType.setTargetCurrencyCode(targetCurrencyCodeCommonBasic);
-            }
-
-            if (invoiceDTO.getBaseCurrencyBaseRate() != null) {
-                TargetCurrencyBaseRateCommonBasic targetCurrencyBaseRateCommonBasic =
-                        new TargetCurrencyBaseRateCommonBasic();
-                targetCurrencyBaseRateCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceDTO.getBaseCurrencyBaseRate()));
-                exchangeRateType.setTargetCurrencyBaseRate(targetCurrencyBaseRateCommonBasic);
-
-                MathematicOperatorCodeCommonBasic operator =
-                        new MathematicOperatorCodeCommonBasic();
-                operator.setValue(EHFConstants.OP_MULTIPLY.getValue());
-                exchangeRateType.setMathematicOperatorCode(operator);
-            }
-            invoice.setTaxExchangeRate(exchangeRateType);
         }
     }
 
@@ -1496,8 +1440,6 @@ public final class UblInvoiceUtils {
 
                 idCommonBasic = new IDCommonBasic();
                 idCommonBasic.setValue(invoiceLineItemDTO.getProductNo());
-                idCommonBasic.setSchemeID(EHFConstants.GTIN.getValue());
-                idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
                 sellersItemIdentification = new ItemIdentificationType();
                 sellersItemIdentification.setID(idCommonBasic);
                 item = new ItemType();
@@ -1769,7 +1711,6 @@ public final class UblInvoiceUtils {
             TaxExemptionReasonCodeCommonBasic taxExemptionReasonCodeCommonBasic = null;
             TaxTotalType taxTotalCommonAggregate = null;
             TaxSchemeCommonAggregate taxSchemeCommonAggregate = null;
-            TransactionCurrencyTaxAmountCommonBasic transactionCurrency = null;
 
             String currencyCode = null;
             CurrencyDTO currencyDTO = invoiceDTO.getCurrencyDTO();
@@ -1792,15 +1733,8 @@ public final class UblInvoiceUtils {
                 if (taxSummary.getTaxAmount() != null) {
                     taxAmountCommonBasic = new TaxAmountCommonBasic();
                     taxAmountCommonBasic.setValue(ConversionUtils.asBigDecimal(taxSummary.getTaxAmount()));
-                    taxAmountCommonBasic.setCurrencyID(currencyCode);
+                    taxAmountCommonBasic.setCurrencyID(baseCurrencyDTO.getCurrencyCode());
                     taxSubtotalCommonAggregate.setTaxAmount(taxAmountCommonBasic);
-                }
-
-                if (taxSummary.getTransactionCurrencyTaxAmount() != null) {
-                    transactionCurrency = new TransactionCurrencyTaxAmountCommonBasic();
-                    transactionCurrency.setValue(ConversionUtils.asBigDecimal(taxSummary.getTransactionCurrencyTaxAmount()));
-                    transactionCurrency.setCurrencyID(baseCurrencyDTO.getCurrencyCode());
-                    taxSubtotalCommonAggregate.setTransactionCurrencyTaxAmount(transactionCurrency);
                 }
 
                 if (taxSummary.getTaxPercent() != null) {
@@ -1810,8 +1744,6 @@ public final class UblInvoiceUtils {
                     idCommonBasic = new IDCommonBasic();
                     //idCommonBasic.setValue(ConversionUtils.getEHFV3TaxCategoryCode(taxSummary.getTaxPercent(), taxSummary.getTaxCode()));
                     idCommonBasic.setValue(taxSummary.getTaxCode());
-                    idCommonBasic.setSchemeID(EHFConstants.TAX_CATEGORY_TWO_DOT_ONE_SCHEME_ID.getValue());
-                    idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
                     taxCategoryType.setID(idCommonBasic);
 
                     percentCommonBasic = new PercentCommonBasic();
@@ -1823,7 +1755,6 @@ public final class UblInvoiceUtils {
                         idCommonBasic = new IDCommonBasic();
                         idCommonBasic.setValue(EHFConstants.VAT.getValue());   
                         idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
-                        idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
                         taxSchemeCommonAggregate = new TaxSchemeCommonAggregate();
                         taxSchemeCommonAggregate.setID(idCommonBasic);
                         taxCategoryType.setTaxScheme(taxSchemeCommonAggregate);
@@ -1973,7 +1904,6 @@ public final class UblInvoiceUtils {
             IDCommonBasic idCommonBasic = new IDCommonBasic();
             idCommonBasic.setValue(EHFConstants.VAT.getValue());
             idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
-            idCommonBasic.setSchemeAgencyID(EHFConstants.SCHEME_AGENCY_ID.getValue());
             taxSchemeCommonAggregate.setID(idCommonBasic);
             partyTaxSchemeCommonAggregate.setTaxScheme(taxSchemeCommonAggregate);
 
@@ -2060,7 +1990,6 @@ public final class UblInvoiceUtils {
                         idCommonBasic = new IDCommonBasic();
                         idCommonBasic.setValue(allowanceChargeDTO.getTaxType());
                         idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
-                        idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
                         taxSchemeCommonAggregate = new TaxSchemeCommonAggregate();
                         taxSchemeCommonAggregate.setID(idCommonBasic);
                     }
@@ -2236,7 +2165,6 @@ public final class UblInvoiceUtils {
             mapEHFV3Customer(invoice, invoiceDTO);
             mapEHFV3CustomerBankAccount(invoice, invoiceDTO);
             mapEHFV3Currency(invoice, invoiceDTO);
-            mapEHFV3ExchangeRate(invoice, invoiceDTO);
             mapEHFV3DeliveryAddress(invoice, invoiceDTO);
             mapEHFV3InvoiceLineItems(invoice, invoiceDTO);
             mapEHFV3TaxSummaries(invoice, invoiceDTO);
@@ -3036,45 +2964,6 @@ public final class UblInvoiceUtils {
             baseCurrencyDTO.setCurrencyCode(taxCurrencyCode.getValue());
             baseCurrencyDTO.setCurrencyName(taxCurrencyCode.getValue());
             invoiceDTO.setBaseCurrencyDTO(baseCurrencyDTO);
-        }
-    }
-
-    /**
-     * Method used to map invoice exchange rate from EHF Invoice to Invoice wrapper.
-     */
-    private static void mapEHFV3ExchangeRate(Invoice invoice, InvoiceDTO invoiceDTO) {
-
-        // Set exchange rate
-        ExchangeRateType exchangeRateType = invoice.getTaxExchangeRate();
-        if (exchangeRateType != null) {
-            CalculationRateCommonBasic calculationRateCommonBasic =
-                    exchangeRateType.getCalculationRate();
-            if (calculationRateCommonBasic != null && calculationRateCommonBasic.getValue() != null) {
-                invoiceDTO.setExchangeRate(calculationRateCommonBasic.getValue().doubleValue());
-            }
-
-            SourceCurrencyBaseRateCommonBasic sourceCurrencyBaseRateCommonBasic =
-                    exchangeRateType.getSourceCurrencyBaseRate();
-            if (sourceCurrencyBaseRateCommonBasic != null
-                    && sourceCurrencyBaseRateCommonBasic.getValue() != null) {
-                invoiceDTO.setInvoiceCurrencyBaseRate(sourceCurrencyBaseRateCommonBasic.getValue().doubleValue());
-            }
-
-            TargetCurrencyCodeCommonBasic targetCurrencyCodeCommonBasic =
-                    exchangeRateType.getTargetCurrencyCode();
-            if (targetCurrencyCodeCommonBasic != null
-                    && targetCurrencyCodeCommonBasic.getValue() != null) {
-                CurrencyDTO baseCurrencyDTO = new CurrencyDTO();
-                baseCurrencyDTO.setCurrencyCode(targetCurrencyCodeCommonBasic.getValue());
-                invoiceDTO.setBaseCurrencyDTO(baseCurrencyDTO);
-            }
-
-            TargetCurrencyBaseRateCommonBasic targetCurrencyBaseRateCommonBasic =
-                    exchangeRateType.getTargetCurrencyBaseRate();
-            if (targetCurrencyBaseRateCommonBasic != null
-                    && targetCurrencyBaseRateCommonBasic.getValue() != null) {
-                invoiceDTO.setBaseCurrencyBaseRate(targetCurrencyBaseRateCommonBasic.getValue().doubleValue());
-            }
         }
     }
 
