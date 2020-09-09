@@ -17,7 +17,6 @@ import eu.peppol.outbound.api.UserDTO;
 import eu.peppol.outbound.api.UserRole;
 import eu.peppol.outbound.client.EHFSchemaValidator;
 import eu.sendregning.oxalis.CustomMain;
-import eu.sendregning.oxalis.TransmissionParameters;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,7 +36,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import javax.xml.ws.http.HTTPException;
-import no.difi.oxalis.api.evidence.EvidenceFactory;
 import no.difi.oxalis.api.lang.OxalisException;
 import no.difi.oxalis.api.lookup.LookupService;
 import no.difi.oxalis.api.outbound.TransmissionResponse;
@@ -47,6 +45,8 @@ import no.difi.oxalis.service.bo.OutboundBO;
 import no.difi.oxalis.service.model.AuditEvent;
 import no.difi.oxalis.service.model.AuditLog;
 import no.difi.oxalis.service.model.MessageInfo;
+import eu.peppol.outbound.api.ReceiptDTO;
+import no.difi.oxalis.service.util.C2ReceiptGenerator;
 import no.difi.oxalis.service.util.OutboundConstants;
 import no.difi.oxalis.service.util.Property;
 import no.difi.oxalis.service.util.PropertyUtil;
@@ -89,6 +89,9 @@ public class OutboundService extends BaseService{
     private static OxalisOutboundComponent oxalisOutboundComponent = null;
     
     private static final Logger LOGGER = LoggerFactory.getLogger(OutboundService.class);
+
+    private String ePEPPOLReceiptPath = "";
+    private C2ReceiptGenerator c2ReceiptGenerator = null;
 
     protected OutboundService() {
         
@@ -139,6 +142,11 @@ public class OutboundService extends BaseService{
             
             evidencePath = PropertyUtil.getProperty(Property.EVIDENCE_PATH);
             validatorURL = PropertyUtil.getProperty(Property.VALIDATOR_URL);
+            
+            ePEPPOLReceiptPath = PropertyUtil.getProperty(Property.EPEPPOL_RECEIPT_PATH);
+            
+            c2ReceiptGenerator = C2ReceiptGenerator.getInstance();
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -230,6 +238,107 @@ public class OutboundService extends BaseService{
                 saveFileInOutBox(documentDTO);
             }
         } catch(Exception e) {
+            LOGGER.error(" *** Exception : Unable to send Document *** " , e);
+            throw e;
+        } finally {
+
+            if(testEnvironment) {
+                if (testFile != null && testFile.exists()) {
+                    testFile.delete();
+                }
+            }
+        }
+        return transmissionIdentifier;
+    }
+     
+    public String sendEPEPPOLDocument(DocumentDTO documentDTO, String userId) throws IOException,
+            ClassNotFoundException, Exception {
+         
+        File testFile = null;
+        eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
+        
+        String transmissionIdentifier = null;
+        byte[] contentWrapedWithSbdh = null;
+
+        try {
+             
+            if(documentDTO.isIsSDB()) {
+               
+                String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
+                PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
+                contentWrapedWithSbdh = obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
+            }  else {
+                
+               contentWrapedWithSbdh = documentDTO.getFileData(); 
+            }      
+            
+            File evidence = null;
+
+            if(testEnvironment) {
+
+                LOGGER.info(" ##### Sending Document : TEST #####");
+                testFile = File.createTempFile(UUID.randomUUID().toString(), ".xml");
+                try (FileOutputStream fos = new FileOutputStream(testFile)) {
+                    
+                    fos.write(contentWrapedWithSbdh);
+                    LOGGER.info(" --- Temp File generated for Testing " + testFile.getName());
+                }
+                
+                // generate c2 receipt acknowledgement
+                c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
+                
+                TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
+                
+                transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+                evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
+                
+                try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
+                    
+                    getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
+                }
+                
+                // move to receipt location
+                evidence.renameTo(new File(ePEPPOLReceiptPath + File.separator + evidence.getName()));
+            } else {
+                
+                try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
+                    
+                    // generate c2 receipt acknowledgement
+                    c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
+                    
+                    LOGGER.info(" ##### Sending Document : PRODUCTION #####");
+                    TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
+                    transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+                    
+                    evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
+                    
+                
+                    try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
+
+                        getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
+                    }
+                    
+                    // move to epeppol receipt location
+                    evidence.renameTo(new File(ePEPPOLReceiptPath + File.separator + evidence.getName()));
+                }
+            }
+                        
+            LOGGER.info(String.format(" Send Document : SUCCESS \n Transmission Id : %s \n Sender : %s \n Receiver : %s", transmissionIdentifier, documentDTO.getSenderId(), documentDTO.getReceiverId()));
+            putAuditLog(transmissionIdentifier, documentDTO, userId, false, evidence.getName());
+
+        } catch(HTTPException | OxalisException | NoSuchAlgorithmException | PeppolSecurityException e) {
+            
+            // generate c2 receipt exception
+            c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
+            
+            LOGGER.error(String.format(" Send Document : FAIL  \n Sender : %s \n Receiver : %s", documentDTO.getSenderId(), documentDTO.getReceiverId()), e);
+            putAuditLog(null, documentDTO, userId, false, e.getLocalizedMessage());
+
+        } catch(Exception e) {
+            
+            // generate c2 receipt exception
+            c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
+            
             LOGGER.error(" *** Exception : Unable to send Document *** " , e);
             throw e;
         } finally {
@@ -338,6 +447,29 @@ public class OutboundService extends BaseService{
         MessageDTO messageDTO = getMessageDTO(messageInfo);
         
         return messageDTO;
+    }
+     
+    /**
+     * Get Message Info
+     * 
+     * @param messageId
+     * @param userId
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     * @throws FaultMessage 
+     */
+     public List<ReceiptDTO> getEPEPPOLReceipts(String messageReference, boolean recentOnly) throws IOException,
+            ClassNotFoundException, Exception {
+
+        if (StringUtils.isEmpty(messageReference)) {
+            throw new ServerException(OutboundConstants.INVALID_DATA);
+        }
+
+        OutboundBO outboundBO = new OutboundBO(DS_NAME);
+        List<ReceiptDTO> receiptInfos = outboundBO.getReceipts(messageReference,recentOnly);
+        
+        return receiptInfos;
     }
      
     /**

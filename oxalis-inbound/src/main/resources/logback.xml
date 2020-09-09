@@ -32,18 +32,28 @@
         </encoder>
     </appender>
 
-    <!-- <appender name="oxalis-logfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>../logs/oxalis.log</File>
+    <appender name="oxalis-inbound-logfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${catalina.base}/logs/oxalis-inbound.log</File>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>../logs/oxalis.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${catalina.base}/logs/oxalis-inbound.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                    <maxFileSize>5MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>3</maxHistory>
         </rollingPolicy>
-    </appender> -->
+    </appender>
+
+    <!-- additivity=false ensures seperate ata only goes to the seperate log -->
+    <logger name="oxalis-inbound" level="info" additivity="false">
+        <appender-ref ref="oxalis-inbound-logfile"/>
+        <!-- <appender-ref ref="STDOUT" /> -->
+    </logger>
 
     <root level="info">
-        <!-- <appender-ref ref="oxalis-logfile"/> -->
+        <appender-ref ref="oxalis-inbound-logfile"/>
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

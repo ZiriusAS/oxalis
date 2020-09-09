@@ -29,6 +29,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
+import eu.peppol.outbound.api.ReceiptDTO;
 import no.difi.oxalis.service.transmission.OutboundService;
 import no.difi.oxalis.service.util.Log;
 import no.difi.vefa.peppol.common.model.Endpoint;
@@ -472,6 +473,63 @@ public class RestController extends BaseController {
             return writeErrorResponse(e);
         }
     }
+    
+    @POST
+    @Path("/sendEPEPPOL")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response sendEPEPPOL(@Context SecurityContext sc, byte[] data) {
+
+        try {
+            DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
+            String userId = sc.getUserPrincipal().getName();
+            String result = service.sendEPEPPOLDocument(documentDTO, userId);
+            
+            byte[] reponse = respond(result);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to send file: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+        
+    }
+    
+    @GET
+    @Path("/getEPEPPOLReceipts/{messageReference}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getEPEPPOLReceipt(@PathParam("messageReference") String messageReference) {
+
+        try {
+            
+            Log.info("Get Message Info for messageReference: " + messageReference);
+            List<ReceiptDTO> receiptInfos = service.getEPEPPOLReceipts(messageReference,false);
+            
+            byte[] reponse = respond(receiptInfos);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to get message info: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+    }
+    
+    @GET
+    @Path("/getLastEPEPPOLReceipts/{messageReference}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLastEPEPPOLReceipt(@PathParam("messageReference") String messageReference) {
+
+        try {
+            
+            Log.info("Get Message Info for messageReference: " + messageReference);
+            List<ReceiptDTO> receiptInfos = service.getEPEPPOLReceipts(messageReference,true);
+            
+            byte[] reponse = respond(receiptInfos.size() > 0 ? receiptInfos.get(0) : null);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to get message info: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+    }
+    
 /*  @POST
     @Path("/receive")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)

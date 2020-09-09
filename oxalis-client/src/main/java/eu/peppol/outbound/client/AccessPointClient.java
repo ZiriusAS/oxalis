@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import ehandel.no.dto.AccesspointDetails;
+import eu.peppol.outbound.api.ReceiptDTO;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
@@ -81,6 +82,9 @@ public final class AccessPointClient {
     private static final String METHOD_GET_ACCESSPOINT_DETAILS = "getAccesspointDetails";
     private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_INVOICE = "getEHFV3InvoiceEndPoint";
     private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_CREDITNOTE = "getEHFV3CreditNoteEndPoint";
+    private static final String METHOD_SEND_EPEPPOL = "sendEPEPPOL";
+    private static final String METHOD_GET_EPEPPOL_RECEIPTS = "getEPEPPOLReceipts";    
+    private static final String METHOD_GET_EPEPPOL_LAST_RECEIPTS = "getLastEPEPPOLReceipts"; 
     private static final String EXCEPTION_STRING = "Exception from EHF Server :";
     private static String ACCESSPOINT_URL = "";
     private static String USERNAME = "";
@@ -167,7 +171,9 @@ public final class AccessPointClient {
      * @param password the password
      * @return the string message id
      * @throws Exception the exception
+     * @deprecated it is recommended to use enhanced peppol function to transmit documents. 
      */
+    @Deprecated
     public static String sendInvoice(DocumentDTO documentDTO, String userName, String password)
             throws Exception {
 
@@ -197,7 +203,9 @@ public final class AccessPointClient {
      * @param documentDTO the document dto
      * @return the string
      * @throws Exception the exception
+     * @deprecated it is recommended to use enhanced peppol function to transmit documents. 
      */
+    @Deprecated
     public static String sendInvoice(DocumentDTO documentDTO) throws Exception {
         return sendInvoice(documentDTO, USERNAME, PASSWORD);
     }
@@ -1070,4 +1078,104 @@ public final class AccessPointClient {
             httpPost.releaseConnection();
         }
     }
+    
+    /**
+     * Sending the document in Enhanced PEPPOL standards.
+     *
+     * @param documentDTO the document dto
+     * @param userName the user name
+     * @param password the password
+     * @return message reference
+     * @throws Exception the exception
+     */
+    public static String sendEPEPPOL(DocumentDTO documentDTO, String userName, String password)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_SEND_EPEPPOL);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(documentDTO), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (String) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+    
+    public static String sendEPEPPOL(DocumentDTO documentDTO) throws Exception {
+        return sendEPEPPOL(documentDTO, USERNAME, PASSWORD);
+    }
+    
+    /**
+     * Get receipts 
+     *
+     * @param messageId
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public static List<ReceiptDTO> getEPEPPOLReceipt(String messageReference, String userName, String password) throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        GetMethod httpGet = getHttpGetMethod(METHOD_GET_EPEPPOL_RECEIPTS + "/" + messageReference);
+
+        try {
+
+            int status = httpClient.executeMethod(httpGet);
+
+            if (status == HttpStatus.SC_OK) {
+                return (List<ReceiptDTO>) new ObjectInputStream(httpGet.getResponseBodyAsStream()).readObject();
+            }
+            throw new Exception(getTextMessage(httpGet.getResponseBodyAsStream()));
+        } finally {
+            httpGet.releaseConnection();
+        }
+    }
+    
+    public static List<ReceiptDTO> getEPEPPOLReceipt(String messageReference) throws Exception {
+        return getEPEPPOLReceipt(messageReference, USERNAME, PASSWORD);
+    }
+    
+    
+    /**
+     * Get the recetly received receipt from the message reference
+     *
+     * @param messageId
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public static ReceiptDTO getLastEPEPPOLReceipt(String messageReference, String userName, String password) throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        GetMethod httpGet = getHttpGetMethod(METHOD_GET_EPEPPOL_LAST_RECEIPTS + "/" + messageReference);
+
+        try {
+
+            int status = httpClient.executeMethod(httpGet);
+
+            if (status == HttpStatus.SC_OK) {
+                return (ReceiptDTO) new ObjectInputStream(httpGet.getResponseBodyAsStream()).readObject();
+            }
+            throw new Exception(getTextMessage(httpGet.getResponseBodyAsStream()));
+        } finally {
+            httpGet.releaseConnection();
+        }
+    }    
+    
+    public static ReceiptDTO getLastEPEPPOLReceipt(String messageReference) throws Exception {
+        return getLastEPEPPOLReceipt(messageReference, USERNAME, PASSWORD);
+    }
+    
 }

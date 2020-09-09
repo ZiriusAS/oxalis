@@ -22,6 +22,7 @@ import java.util.Set;
 import javax.xml.datatype.DatatypeFactory;
 import no.difi.oxalis.service.util.ObjectStorage;
 import no.difi.oxalis.service.model.MessageInfo;
+import eu.peppol.outbound.api.ReceiptDTO;
 import no.difi.oxalis.service.util.IdentifierName;
 import org.apache.commons.io.IOUtils;
 
@@ -107,6 +108,73 @@ public class OutboundBO extends AbstractBO {
             }
 
             return messageInfo;
+
+        } catch (Throwable e) {
+            throw new BOException(e);
+        } finally {
+            release(rs);
+            release(ps);
+            cleanup();
+        }
+    }
+    
+    public List<ReceiptDTO> getReceipts(String messageReference, boolean recentOnly) {
+
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<ReceiptDTO> receiptInfos = new ArrayList<>();
+
+        try {
+
+            String sql = "SELECT EPEPPOL_MESSAGE_RECEIPT_ID,\n" +
+                            "       MESSAGE_REFERENCE,\n" +
+                            "       SENDER_PARTICIPANT_ID,\n" +
+                            "       RECEIVER_PARTICIPANT_ID,\n" +
+                            "       RECEIPT,\n" +
+                            "       DESCRIPTION,\n" +
+                            "       STATE,\n" +
+                            "       CREATED_DATE,\n" +
+                            "       MODIFIED_DATE\n" +
+                            "FROM EPEPPOL_MESSAGE_RECEIPTS\n" +
+                            "WHERE MESSAGE_REFERENCE = ? \n"+
+                            "ORDER BY CREATED_DATE\n";
+            
+            if(recentOnly) {
+                sql += "LIMIT 1";
+            }
+
+            ps = con.prepareStatement(sql);
+            ps.setString(1, messageReference);
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                ReceiptDTO receiptInfo = new ReceiptDTO();
+                receiptInfo.setId(rs.getLong(1));
+                receiptInfo.setMessageReference(rs.getString(2));
+                receiptInfo.setSenderId(rs.getString(3));
+                receiptInfo.setReceiverId(rs.getString(4));
+                
+                Blob blob = rs.getBlob(5);
+                if (blob != null) {
+                    int blobLength = (int) blob.length();
+                    receiptInfo.setReceipt(blob.getBytes(1, blobLength));
+                    blob.free();
+                } else {
+                    receiptInfo.setReceipt(ObjectStorage.getFile(String.valueOf(receiptInfo.getId())));
+                }
+                
+                receiptInfo.setDescription(rs.getString(6));
+                receiptInfo.setState(rs.getString(7));
+                
+                receiptInfo.setCreatedDate(rs.getDate(8));
+                receiptInfo.setModifiedDate(rs.getDate(9));
+                
+                receiptInfos.add(receiptInfo);
+            }
+
+            return receiptInfos;
 
         } catch (Throwable e) {
             throw new BOException(e);

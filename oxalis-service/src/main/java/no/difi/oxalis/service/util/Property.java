@@ -33,6 +33,8 @@ public enum Property {
     
     EVIDENCE_PATH("evidence.path"),
     
+    EPEPPOL_RECEIPT_PATH("epeppol.receipt.path"),
+    
     VALIDATOR_URL("validator.url");
     
     protected String propertyName;
