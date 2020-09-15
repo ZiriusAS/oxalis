@@ -135,16 +135,24 @@ public class OutboundBO extends AbstractBO {
                             "       STATE,\n" +
                             "       CREATED_DATE,\n" +
                             "       MODIFIED_DATE\n" +
-                            "FROM EPEPPOL_MESSAGE_RECEIPTS\n" +
-                            "WHERE MESSAGE_REFERENCE = ? \n"+
-                            "ORDER BY CREATED_DATE\n";
+                            "FROM EPEPPOL_MESSAGE_RECEIPTS\n";
+                    
+                    if (messageReference != null) {
+                       sql += "WHERE MESSAGE_REFERENCE = ? \n";
+                    } else {
+                       sql += "WHERE READ_FLAG <> 1 \n"; 
+                    }
+                            sql += "ORDER BY CREATED_DATE\n";
             
             if(recentOnly) {
                 sql += "LIMIT 1";
             }
 
             ps = con.prepareStatement(sql);
-            ps.setString(1, messageReference);
+            
+            if(messageReference != null) {
+                ps.setString(1, messageReference);
+            }
 
             rs = ps.executeQuery();
 
@@ -348,7 +356,35 @@ public class OutboundBO extends AbstractBO {
             cleanup();
         }
     }
+    
+    public boolean markReceiptAsRead(List<String> messageIds) {
 
+        PreparedStatement ps = null;
+
+        try {
+
+            String sql = "UPDATE EPEPPOL_MESSAGE_RECEIPTS SET READ_FLAG = 1 WHERE EPEPPOL_MESSAGE_RECEIPT_ID IN (?";
+            for (int i = 1; i < messageIds.size(); i++) {
+                sql = sql + ", ?";
+            }
+            sql = sql + ")";
+            ps = con.prepareStatement(sql);
+
+            for (int i = 0; i < messageIds.size(); i++) {
+                ps.setString((i+1), messageIds.get(i));
+            }
+
+            ps.executeUpdate();
+            return true;
+
+        } catch (Throwable e) {
+            throw new BOException(e);
+        } finally {
+            release(ps);
+            cleanup();
+        }
+    }
+    
     /**
      * Creates the user.
      * 

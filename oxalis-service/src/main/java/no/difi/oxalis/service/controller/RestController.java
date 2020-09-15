@@ -530,6 +530,44 @@ public class RestController extends BaseController {
         }
     }
     
+    @GET
+    @Path("/getAllNewReceipts")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAllNewReceipts() {
+
+        try {
+            
+            Log.info("Get all new receipts ");
+            List<ReceiptDTO> receiptInfos = service.getEPEPPOLReceipts(null,false);
+            
+            byte[] reponse = respond(receiptInfos);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to get receipts : " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+    }
+    
+    @POST
+    @Path("/markReceiptAsRead")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response markReceiptAsRead(byte[] data) {
+        
+        try {
+            
+            List<String> messageIds = (List<String>) getObjectFromStream(data); 
+            Log.info("Mark receipt as read for Ids: " + messageIds);
+            boolean result = service.markReceiptAsRead(messageIds, null);
+
+            byte[] reponse = respond(result);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to mark as read: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+    }
+    
 /*  @POST
     @Path("/receive")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)

@@ -462,10 +462,6 @@ public class OutboundService extends BaseService{
      public List<ReceiptDTO> getEPEPPOLReceipts(String messageReference, boolean recentOnly) throws IOException,
             ClassNotFoundException, Exception {
 
-        if (StringUtils.isEmpty(messageReference)) {
-            throw new ServerException(OutboundConstants.INVALID_DATA);
-        }
-
         OutboundBO outboundBO = new OutboundBO(DS_NAME);
         List<ReceiptDTO> receiptInfos = outboundBO.getReceipts(messageReference,recentOnly);
         
@@ -601,6 +597,36 @@ public class OutboundService extends BaseService{
         }
 
         result = outboundBO.markAsReadFromWeb(messageIds);
+        return result;
+    }
+    
+    
+        /**
+     * Mark a participant's message as read from web.
+     * 
+     * @param messageIds
+     *            the message ids
+     * @param userId
+     *            the user id
+     * @return true, if successful
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     * @throws ClassNotFoundException
+     *             the class not found exception
+     * @throws FaultMessage
+     *             the fault message
+     */
+    public boolean markReceiptAsRead(List<String> messageIds, String userId) throws IOException,
+            ClassNotFoundException, Exception {
+        
+        OutboundBO outboundBO = new OutboundBO(DS_NAME);
+        boolean result = false;
+
+        if (messageIds == null || messageIds.isEmpty()) {
+            throw new ServerException(OutboundConstants.INVALID_DATA);
+        }
+
+        result = outboundBO.markReceiptAsRead(messageIds);
         return result;
     }
     

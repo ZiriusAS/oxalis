@@ -85,6 +85,8 @@ public final class AccessPointClient {
     private static final String METHOD_SEND_EPEPPOL = "sendEPEPPOL";
     private static final String METHOD_GET_EPEPPOL_RECEIPTS = "getEPEPPOLReceipts";    
     private static final String METHOD_GET_EPEPPOL_LAST_RECEIPTS = "getLastEPEPPOLReceipts"; 
+    private static final String METHOD_GET_ALL_NEW_RECEIPTS = "getAllNewReceipts"; 
+    private static final String METHOD_MARK_RECEIPTS = "markReceiptAsRead"; 
     private static final String EXCEPTION_STRING = "Exception from EHF Server :";
     private static String ACCESSPOINT_URL = "";
     private static String USERNAME = "";
@@ -1176,6 +1178,79 @@ public final class AccessPointClient {
     
     public static ReceiptDTO getLastEPEPPOLReceipt(String messageReference) throws Exception {
         return getLastEPEPPOLReceipt(messageReference, USERNAME, PASSWORD);
+    }
+    
+    /**
+     * Get the recetly received receipt from the message reference
+     *
+     * @param messageId
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public static List<ReceiptDTO> getAllNewReceipts(String userName, String password) throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        GetMethod httpGet = getHttpGetMethod(METHOD_GET_ALL_NEW_RECEIPTS);
+
+        try {
+
+            int status = httpClient.executeMethod(httpGet);
+
+            if (status == HttpStatus.SC_OK) {
+                return (List<ReceiptDTO>) new ObjectInputStream(httpGet.getResponseBodyAsStream()).readObject();
+            }
+            throw new Exception(getTextMessage(httpGet.getResponseBodyAsStream()));
+        } finally {
+            httpGet.releaseConnection();
+        }
+    }    
+    
+    public static List<ReceiptDTO> getAllNewReceipts() throws Exception {
+        return getAllNewReceipts( USERNAME, PASSWORD);
+    }
+    
+    /**
+     * Mark receipt as read.
+     *
+     * @param receiptIds the receipt ids
+     * @param userName the user name
+     * @param password the password
+     * @return true, if successful
+     * @throws Exception the exception
+     */
+    public static boolean markReceiptAsRead(List<String> receiptIds, String userName, String password)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_MARK_RECEIPTS);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(receiptIds), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (Boolean) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    /**
+     * Mark receipt as read.
+     *
+     * @param receiptIds the receipt ids
+     * @return true, if successful
+     * @throws Exception the exception
+     */
+    public static boolean markReceiptAsRead(List<String> receiptIds) throws Exception {
+        return markReceiptAsRead(receiptIds, USERNAME, PASSWORD);
     }
     
 }
