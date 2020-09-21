@@ -46,6 +46,7 @@ import no.difi.oxalis.service.model.AuditEvent;
 import no.difi.oxalis.service.model.AuditLog;
 import no.difi.oxalis.service.model.MessageInfo;
 import eu.peppol.outbound.api.ReceiptDTO;
+import no.difi.oxalis.api.lang.EvidenceException;
 import no.difi.oxalis.service.util.C2ReceiptGenerator;
 import no.difi.oxalis.service.util.OutboundConstants;
 import no.difi.oxalis.service.util.Property;
@@ -262,18 +263,8 @@ public class OutboundService extends BaseService{
 
         try {
              
-            if(documentDTO.isIsSDB()) {
-               
-                String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
-                PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
-                contentWrapedWithSbdh = obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
-            }  else {
-                
-               contentWrapedWithSbdh = documentDTO.getFileData(); 
-            }      
+            contentWrapedWithSbdh = wrapContentWithHeader(documentDTO,obj);
             
-            File evidence = null;
-
             if(testEnvironment) {
 
                 LOGGER.info(" ##### Sending Document : TEST #####");
@@ -290,15 +281,8 @@ public class OutboundService extends BaseService{
                 TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
                 
                 transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
-                evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
                 
-                try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
-                    
-                    getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
-                }
-                
-                // move to receipt location
-                evidence.renameTo(new File(ePEPPOLReceiptPath + File.separator + evidence.getName()));
+                storeEvidenceOnEPEPPOLPath(transmissionIdentifier,transmissionReponse);
             } else {
                 
                 try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
@@ -310,21 +294,12 @@ public class OutboundService extends BaseService{
                     TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
                     transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
                     
-                    evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
-                    
-                
-                    try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
-
-                        getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
-                    }
-                    
-                    // move to epeppol receipt location
-                    evidence.renameTo(new File(ePEPPOLReceiptPath + File.separator + evidence.getName()));
+                    storeEvidenceOnEPEPPOLPath(transmissionIdentifier,transmissionReponse);
                 }
             }
                         
             LOGGER.info(String.format(" Send Document : SUCCESS \n Transmission Id : %s \n Sender : %s \n Receiver : %s", transmissionIdentifier, documentDTO.getSenderId(), documentDTO.getReceiverId()));
-            putAuditLog(transmissionIdentifier, documentDTO, userId, false, evidence.getName());
+            putAuditLog(transmissionIdentifier, documentDTO, userId, false, transmissionIdentifier);
 
         } catch(HTTPException | OxalisException | NoSuchAlgorithmException | PeppolSecurityException e) {
             
@@ -350,6 +325,33 @@ public class OutboundService extends BaseService{
             }
         }
         return transmissionIdentifier;
+    }
+    
+    
+    private byte[] wrapContentWithHeader(DocumentDTO documentDTO, eu.sendregning.oxalis.CustomMain obj) throws Exception {
+        if (documentDTO.isIsSDB()) {
+
+            String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
+            PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
+            return obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
+        } else {
+
+            return documentDTO.getFileData();
+        }
+    }
+    
+    private void storeEvidenceOnEPEPPOLPath(String name, no.difi.oxalis.api.outbound.TransmissionResponse transmissionReponse) throws IOException, EvidenceException {
+        
+        File evidence = evidence = File.createTempFile(name, ".receipt.dat");
+
+        try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
+
+            getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
+        }
+
+        // move to epeppol receipt location
+        evidence.renameTo(new File(ePEPPOLReceiptPath + File.separator + evidence.getName()));
+        
     }
      
     private boolean isValidEHF(String jsonString) {
