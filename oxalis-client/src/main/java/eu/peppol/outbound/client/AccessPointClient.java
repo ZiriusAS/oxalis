@@ -87,6 +87,12 @@ public final class AccessPointClient {
     private static final String METHOD_GET_EPEPPOL_LAST_RECEIPTS = "getLastEPEPPOLReceipts"; 
     private static final String METHOD_GET_ALL_NEW_RECEIPTS = "getAllNewReceipts"; 
     private static final String METHOD_MARK_RECEIPTS = "markReceiptAsRead"; 
+    private static final String METHOD_SEND_EHFV3_ORDER = "sendEHFV3Order";
+    private static final String METHOD_SEND_EHFV3_ORDER_RESPONSE = "sendEHFV3OrderResponse";
+    private static final String METHOD_RECEIVE_UN_READ_MESSAGE_ID_OF_ORDER = "receiveUnReadMessageIdOfOrder";
+    private static final String METHOD_RECEIVE_UN_READ_MESSAGE_ID_OF_ORDER_RESPONSE = "receiveUnReadMessageIdOfOrderResponse";
+    private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_ORDER = "getEHFV3OrderEndPoint";
+    private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_ORDER_RESPONSE = "getEHFV3OrderResponseEndPoint";
     private static final String EXCEPTION_STRING = "Exception from EHF Server :";
     private static String ACCESSPOINT_URL = "";
     private static String USERNAME = "";
@@ -1252,5 +1258,252 @@ public final class AccessPointClient {
     public static boolean markReceiptAsRead(List<String> receiptIds) throws Exception {
         return markReceiptAsRead(receiptIds, USERNAME, PASSWORD);
     }
-    
+
+
+    /**
+     * Get un Read Message Id for Web
+     *
+     * @param syncDate
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public static MessageIdListDTO getUnReadMessageIdOfOrder(String userName, String password, String participentId)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_RECEIVE_UN_READ_MESSAGE_ID_OF_ORDER + "/");
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(participentId), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (MessageIdListDTO) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+      /**
+     * Get un Read Message Id for Web
+     *
+     * @param participentId receiver participent id if null returns messages of all receiver
+     *
+     * @return MessageIdListDTO
+     * @throws Exception
+     */
+    public static MessageIdListDTO getUnReadMessageIdOfOrder(String participentId) throws Exception {
+        return getUnReadMessageIdOfOrder(USERNAME, PASSWORD, participentId);
+    }
+
+         /**
+     * Get un Read Message Id for Web
+     *
+     * @param syncDate
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public static MessageIdListDTO getUnReadMessageIdOfOrderResponse(String userName, String password, String participentId)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_RECEIVE_UN_READ_MESSAGE_ID_OF_ORDER_RESPONSE + "/");
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(participentId), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (MessageIdListDTO) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    /**
+     * Get un Read Message Id for Web
+     *
+     * @param participentId receiver participent id if null returns messages of all receiver
+     *
+     * @return MessageIdListDTO
+     * @throws Exception
+     */
+    public static MessageIdListDTO getUnReadMessageIdOfOrderResponse(String participentId) throws Exception {
+        return getUnReadMessageIdOfOrderResponse(USERNAME, PASSWORD, participentId);
+    }
+
+       /**
+     * Get the access point details if EHFV3 Order is enabled
+     *
+     * @param participantId
+     * @param userName
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    public static AccesspointDetails getEHFV3OrderEndPoint(String participantId, String userName, String password) throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_ORDER);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(participantId), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+
+            int status = httpClient.executeMethod(httpPost);
+            if (status == HttpStatus.SC_OK) {
+
+                String endpointData = httpPost.getResponseBodyAsString();
+                endpointData = endpointData.replace("{", "");
+                endpointData = endpointData.replace("}", "");
+                String[] endpointArray = endpointData.split(",");
+                AccesspointDetails accesspointDetails = new AccesspointDetails();
+
+                if (endpointArray.length >= 3) {
+
+                    accesspointDetails.setUrl(endpointArray[0].split("=")[1]);
+                    accesspointDetails.setBusDoxProtocol(endpointArray[1].split("=")[1]);
+                    accesspointDetails.setCommonName(endpointArray[2].split("=")[1]);
+                }
+                return accesspointDetails;
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    /**
+     * Get the access point details if EHFV3 order response is enabled
+     *
+     * @param participantId
+     * @param userName
+     * @param password
+     * @return the AccesspointDetails
+     * @throws Exception
+     */
+    public static AccesspointDetails getEHFV3OrderResponseEndPoint(String participantId, String userName, String password) throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_ORDER_RESPONSE);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(participantId), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+
+            int status = httpClient.executeMethod(httpPost);
+            if (status == HttpStatus.SC_OK) {
+
+                String endpointData = httpPost.getResponseBodyAsString();
+                endpointData = endpointData.replace("{", "");
+                endpointData = endpointData.replace("}", "");
+                String[] endpointArray = endpointData.split(",");
+                AccesspointDetails accesspointDetails = new AccesspointDetails();
+
+                if (endpointArray.length >= 3) {
+
+                    accesspointDetails.setUrl(endpointArray[0].split("=")[1]);
+                    accesspointDetails.setBusDoxProtocol(endpointArray[1].split("=")[1]);
+                    accesspointDetails.setCommonName(endpointArray[2].split("=")[1]);
+                }
+                return accesspointDetails;
+            }
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+
+    /**
+     * Send order.
+     *
+     * @param documentDTO the document dto
+     * @return the string
+     * @throws Exception the exception
+     */
+    public static String sendEHFV3Order(DocumentDTO documentDTO) throws Exception {
+        return sendEHFV3Order(documentDTO, USERNAME, PASSWORD);
+    }
+
+    /**
+     * Send order.
+     *
+     * @param documentDTO the document dto
+     * @param userName the user name
+     * @param password the password
+     * @return the string
+     * @throws Exception the exception
+     */
+    public static String sendEHFV3Order(DocumentDTO documentDTO, String userName, String password)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_SEND_EHFV3_ORDER);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(documentDTO), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (String) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+    public static String sendEHFV3OrderResponse(DocumentDTO documentDTO) throws Exception {
+        return sendEHFV3OrderResponse(documentDTO, USERNAME, PASSWORD);
+    }
+
+    public static String sendEHFV3OrderResponse(DocumentDTO documentDTO, String userName, String password)
+            throws Exception {
+
+        HttpClient httpClient = getHttpClient(userName, password);
+        PostMethod httpPost = getHttpPostMethod(METHOD_SEND_EHFV3_ORDER_RESPONSE);
+
+        try {
+
+            RequestEntity requestEntity
+                    = new InputStreamRequestEntity(streamObject(documentDTO), CONTENT_TYPE);
+            httpPost.setRequestEntity(requestEntity);
+            int status = httpClient.executeMethod(httpPost);
+
+            if (status == HttpStatus.SC_OK) {
+                return (String) new ObjectInputStream(httpPost.getResponseBodyAsStream()).readObject();
+            }
+
+            throw new Exception(getTextMessage(httpPost.getResponseBodyAsStream()));
+        } finally {
+            httpPost.releaseConnection();
+        }
+    }
+
+
 }

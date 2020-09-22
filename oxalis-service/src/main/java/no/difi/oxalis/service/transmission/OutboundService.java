@@ -328,9 +328,13 @@ public class OutboundService extends BaseService{
         
         try {
 
-            String invoiceFile = IOUtils.toString(documentContent, CharEncoding.UTF_8);
-            if (invoiceFile.contains("CreditNote>")) {
+            String content = IOUtils.toString(documentContent, CharEncoding.UTF_8);
+            if (content.contains("CreditNote>")) {
                 return EHFConstants.EHF_THREE_DOT_ZERO_CREDIT_NOTE.getValue();
+            } else if (content.contains("Order>")) {
+                return EHFConstants.EHF_THREE_DOT_ZERO_ORDER.getValue();
+            } else if (content.contains("OrderResponse>")) {
+                return EHFConstants.EHF_THREE_DOT_ZERO_ORDER_RESPONSE.getValue();
             }
 
             return EHFConstants.EHF_THREE_DOT_ZERO_INVOICE.getValue();
@@ -500,6 +504,60 @@ public class OutboundService extends BaseService{
     }
     
     /**
+     * Get All Message Id
+     * 
+     * @param timestamp
+     * @param userId
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException 
+     */
+    public MessageIdListDTO getAllUnReadMessageIdOfOrder(String participentId) throws IOException,
+            ClassNotFoundException, Exception {
+        
+        List<String> messageIdList = new ArrayList<String>();
+        MessageIdListDTO messageIdListDTO = new MessageIdListDTO();
+        OutboundBO outboundBO = new OutboundBO(DS_NAME);
+        
+        try {
+
+            messageIdList = outboundBO.getAllUnReadMessageIdOfOrder(participentId);
+            messageIdListDTO.setMessageIdList(messageIdList);
+        } catch (Exception e) {
+            
+        }
+        
+        return messageIdListDTO;
+    }
+
+    /**
+     * Get All Message Id
+     * 
+     * @param timestamp
+     * @param userId
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException 
+     */
+    public MessageIdListDTO getAllUnReadMessageIdOfOrderResponse(String participentId) throws IOException,
+            ClassNotFoundException, Exception {
+        
+        List<String> messageIdList = new ArrayList<String>();
+        MessageIdListDTO messageIdListDTO = new MessageIdListDTO();
+        OutboundBO outboundBO = new OutboundBO(DS_NAME);
+        
+        try {
+
+            messageIdList = outboundBO.getAllUnReadMessageIdOfOrderResponse(participentId);
+            messageIdListDTO.setMessageIdList(messageIdList);
+        } catch (Exception e) {
+            
+        }
+        
+        return messageIdListDTO;
+    }    
+    
+    /**
      * Mark a participant's message as read.
      * 
      * @param messageIds
@@ -639,6 +697,7 @@ public class OutboundService extends BaseService{
 
         return endpoint;
     }
+    
      /**
       * Get Endpoint if EHFV3 CreditNote enabled
       * 
@@ -660,6 +719,70 @@ public class OutboundService extends BaseService{
             Header header = Header.newInstance()
                 .receiver(ParticipantIdentifier.of(participantId))
                 .documentType(PeppolDocumentTypeId.valueOf(EHFConstants.EHF_THREE_DOT_ZERO_CREDIT_NOTE.getValue()).toVefa())
+                .process(ProcessIdentifier.of(EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue()));
+
+            endpoint = lookupService.lookup(header);
+            
+        } catch (Exception e) {
+            LOGGER.error("Exception in getEHFV3InvoiceEndPoint ", e);
+            throw e;
+        }
+        return endpoint;
+    }
+    
+     /**
+      * Get Endpoint if EHFV3 CreditNote enabled
+      * 
+      * @param participantId
+      * @param userId
+      * @return Endpoint
+      * @throws IOException
+      * @throws ClassNotFoundException
+      * @throws FaultMessage 
+      */
+    public Endpoint getEHFV3OrderEndPoint(String participantId, String userId) throws IOException,
+            ClassNotFoundException, Exception {
+        
+        OxalisOutboundComponent oxalisOutboundComponent = getOutBoundComponent();
+        LookupService lookupService = oxalisOutboundComponent.getLookupService();
+        Endpoint endpoint = null;       
+  
+        try {
+            Header header = Header.newInstance()
+                .receiver(ParticipantIdentifier.of(participantId))
+                .documentType(PeppolDocumentTypeId.valueOf(EHFConstants.EHF_THREE_DOT_ZERO_ORDER.getValue()).toVefa())
+                .process(ProcessIdentifier.of(EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue()));
+
+            endpoint = lookupService.lookup(header);
+            
+        } catch (Exception e) {
+            LOGGER.error("Exception in getEHFV3InvoiceEndPoint ", e);
+            throw e;
+        }
+        return endpoint;
+    }
+    
+     /**
+      * Get Endpoint if EHFV3 CreditNote enabled
+      * 
+      * @param participantId
+      * @param userId
+      * @return Endpoint
+      * @throws IOException
+      * @throws ClassNotFoundException
+      * @throws FaultMessage 
+      */
+    public Endpoint getEHFV3OrderResponseEndPoint(String participantId, String userId) throws IOException,
+            ClassNotFoundException, Exception {
+        
+        OxalisOutboundComponent oxalisOutboundComponent = getOutBoundComponent();
+        LookupService lookupService = oxalisOutboundComponent.getLookupService();
+        Endpoint endpoint = null;       
+  
+        try {
+            Header header = Header.newInstance()
+                .receiver(ParticipantIdentifier.of(participantId))
+                .documentType(PeppolDocumentTypeId.valueOf(EHFConstants.EHF_THREE_DOT_ZERO_ORDER_RESPONSE.getValue()).toVefa())
                 .process(ProcessIdentifier.of(EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue()));
 
             endpoint = lookupService.lookup(header);

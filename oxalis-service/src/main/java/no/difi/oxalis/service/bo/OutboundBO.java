@@ -301,6 +301,74 @@ public class OutboundBO extends AbstractBO {
         }
     }
     
+    public List<String> getAllUnReadMessageIdOfOrder(String participentId) {
+
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<String> messageIdList = new ArrayList<String>();
+
+        try {
+
+            String sql = "SELECT MESSAGE_IDENTIFIER AS MessageIdentifier FROM PEPPOL_MESSAGE_META_DATA "
+                    + " WHERE IS_DELETED = 0 AND MESSAGE_READ_FLAG = 0 " 
+                    + " AND ( RECIPIENT_IDENTIFIER = ? OR ? IS NULL )"
+                    + " AND ( UPPER(DOCUMENT_TYPE_IDENTIFIER) LIKE '%ORDER%' AND UPPER(DOCUMENT_TYPE_IDENTIFIER) NOT LIKE '%ORDERRESPONSE%' ) ";
+
+            ps = con.prepareStatement(sql);
+            
+            ps.setString(1, participentId);
+            ps.setString(2, participentId);
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                messageIdList.add(rs.getString(IdentifierName.MESSAGE_ID.stringValue()));
+            }
+
+            return messageIdList;
+        } catch(Exception e) {
+            throw new BOException(e);
+        } finally {
+            release(rs);
+            release(ps);
+            cleanup();
+        }
+    }
+    
+    public List<String> getAllUnReadMessageIdOfOrderResponse(String participentId) {
+
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<String> messageIdList = new ArrayList<String>();
+
+        try {
+
+            String sql = "SELECT MESSAGE_IDENTIFIER AS MessageIdentifier FROM PEPPOL_MESSAGE_META_DATA "
+                    + " WHERE IS_DELETED = 0 AND MESSAGE_READ_FLAG = 0 " 
+                    + " AND ( RECIPIENT_IDENTIFIER = ? OR ? IS NULL )"
+                    + " AND UPPER(DOCUMENT_TYPE_IDENTIFIER) LIKE '%ORDERRESPONSE%' ";
+
+            ps = con.prepareStatement(sql);
+
+            ps.setString(1, participentId);
+            ps.setString(2, participentId);
+            
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                messageIdList.add(rs.getString(IdentifierName.MESSAGE_ID.stringValue()));
+            }
+
+            return messageIdList;
+        } catch(Exception e) {
+            throw new BOException(e);
+        } finally {
+            release(rs);
+            release(ps);
+            cleanup();
+        }
+    }
+    
     public boolean markAsRead(List<String> messageIds) {
 
         PreparedStatement ps = null;
