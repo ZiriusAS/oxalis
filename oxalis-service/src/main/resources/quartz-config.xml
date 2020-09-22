@@ -35,7 +35,7 @@
               <job-name>resendPaymentJob</job-name>
               <job-group>job-group</job-group>
               <!-- trigger every hour -->
-              <cron-expression>*/5 * * * *</cron-expression>
+	      <cron-expression>0 0/5 * * * ? *</cron-expression>
            </cron>
        </trigger>
     </schedule>
