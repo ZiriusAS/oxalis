@@ -483,7 +483,7 @@ public class RestController extends BaseController {
         try {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
             String userId = sc.getUserPrincipal().getName();
-            String result = service.sendEPEPPOLDocument(documentDTO, userId);
+            String result = service.sendEPEPPOLDocument(documentDTO, userId, false);
             
             byte[] reponse = respond(result);
             return Response.ok(reponse).build();

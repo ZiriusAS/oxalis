@@ -27,7 +27,7 @@ public class DocumentDTO implements Serializable {
     private byte[] fileData;
     private String licenseId;
     private String fileName;
-    private boolean isSDB = false;
+    private boolean EHFDocument = true;
 
     public String getSenderId() {
         return senderId;
@@ -73,12 +73,12 @@ public class DocumentDTO implements Serializable {
         return ((senderId != null) && (receiverId != null) && (fileData != null));        
     }
 
-    public boolean isIsSDB() {
-        return isSDB;
+    public boolean isEHFDocument() {
+        return EHFDocument;
     }
 
-    public void setIsSDB(boolean isSDB) {
-        this.isSDB = isSDB;
+    public void setEHFDocument(boolean EHFDocument) {
+        this.EHFDocument = EHFDocument;
     }
     
 }

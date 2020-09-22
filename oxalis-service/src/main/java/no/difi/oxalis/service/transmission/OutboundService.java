@@ -78,6 +78,7 @@ public class OutboundService extends BaseService{
     private static String oxalisServerUrl = null;
     private static String oxalisCertificatePath = null;
     private static String outboundMsgDir;
+    private static String outboundPaymentMsgDir;
     private static String followUpMsgDir;
     private static final String XML_EXT = "xml";
     private static final String[] EXT_ARR = {XML_EXT};
@@ -138,6 +139,7 @@ public class OutboundService extends BaseService{
             oxalisServerUrl = PropertyUtil.getProperty(Property.OXALIS_SERVER_URL);
             oxalisCertificatePath = PropertyUtil.getProperty(Property.OXALIS_CERTIFICATE_PATH);
             outboundMsgDir =  PropertyUtil.getProperty(Property.OUTBOUND_MESSAGE_STORE_PATH);
+            outboundPaymentMsgDir = PropertyUtil.getProperty(Property.OUTBOUND_PAYMENT_MESSAGE_STORE_PATH);
             followUpMsgDir =  PropertyUtil.getProperty(Property.FOLLOWUP_MESSAGE_STORE_PATH);
             DS_NAME = PropertyUtil.getProperty(Property.DATASOURCE_NAME);
             
@@ -156,104 +158,16 @@ public class OutboundService extends BaseService{
     
      public String sendDocument(DocumentDTO documentDTO, String userId, boolean isResendDocument) throws IOException,
             ClassNotFoundException, Exception {
-         
-         // perform a validation 
-         EHFSchemaValidator.setClientUrl(validatorURL);
-         
-         String validatorResult = EHFSchemaValidator.validateEhfXml(IOUtils.toString(documentDTO.getFileData(), CharEncoding.UTF_8));
-         boolean valid = true;
-         try {
-            
-             valid = isValidEHF(validatorResult);
-         } catch (Exception ex) {
-             throw new RuntimeException("Unable to validate Document",ex);
-         }
-         
-         if(!valid) { 
-             throw new RuntimeException("Invalid Document");
-         }
-         
-        File testFile = null;
-        eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
         
-        String transmissionIdentifier = null;
-
-        try {
-            
-            String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
-            PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
-            byte[] contentWrapedWithSbdh = obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
-            File evidence = null;
-
-            if(testEnvironment) {
-
-                LOGGER.info(" ##### Sending Document : TEST #####");
-                testFile = File.createTempFile(UUID.randomUUID().toString(), ".xml");
-                try (FileOutputStream fos = new FileOutputStream(testFile)) {
-                    
-                    fos.write(contentWrapedWithSbdh);
-                    LOGGER.info(" --- Temp File generated for Testing " + testFile.getName());
-                }
-                TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
-                
-                transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
-                evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
-                
-                try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
-                    
-                    getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
-                }
-                
-                // move to actual location
-                evidence.renameTo(new File(evidencePath + File.separator + evidence.getName()));
-            } else {
-                
-                try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
-
-                    LOGGER.info(" ##### Sending Document : PRODUCTION #####");
-                    TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
-                    transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
-                    
-                    evidence = File.createTempFile(transmissionIdentifier, ".receipt.dat");
-                    
-                
-                    try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
-
-                        getOutBoundComponent().getEvidenceFactory().write(outputStream, transmissionReponse);
-                    }
-                    
-                    // move to actual location
-                    evidence.renameTo(new File(evidencePath + File.separator + evidence.getName()));
-                }
-            }
-
-            LOGGER.info(String.format(" Send Document : SUCCESS \n Transmission Id : %s \n Sender : %s \n Receiver : %s", transmissionIdentifier, documentDTO.getSenderId(), documentDTO.getReceiverId()));
-            putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, evidence.getName());
-
-        } catch(HTTPException | OxalisException | NoSuchAlgorithmException | PeppolSecurityException e) {
-
-            LOGGER.error(String.format(" Send Document : FAIL  \n Sender : %s \n Receiver : %s", documentDTO.getSenderId(), documentDTO.getReceiverId()), e);
-            putAuditLog(null, documentDTO, userId, isResendDocument, e.getLocalizedMessage());
-
-            if (!isResendDocument) {
-                saveFileInOutBox(documentDTO);
-            }
-        } catch(Exception e) {
-            LOGGER.error(" *** Exception : Unable to send Document *** " , e);
-            throw e;
-        } finally {
-
-            if(testEnvironment) {
-                if (testFile != null && testFile.exists()) {
-                    testFile.delete();
-                }
-            }
-        }
-        return transmissionIdentifier;
+         return sendEPEPPOLDocument(documentDTO, userId, isResendDocument);
     }
      
-    public String sendEPEPPOLDocument(DocumentDTO documentDTO, String userId) throws IOException,
+    public String sendEPEPPOLDocument(DocumentDTO documentDTO, String userId, boolean isResendDocument) throws IOException,
             ClassNotFoundException, Exception {
+        
+        if(documentDTO.isEHFDocument()) {
+            performValidation(documentDTO);
+        }
          
         File testFile = null;
         eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
@@ -262,8 +176,14 @@ public class OutboundService extends BaseService{
         byte[] contentWrapedWithSbdh = null;
 
         try {
-             
-            contentWrapedWithSbdh = wrapContentWithHeader(documentDTO,obj);
+            
+            if (documentDTO.isEHFDocument()) {
+                
+                contentWrapedWithSbdh = wrapContentWithHeader(documentDTO,obj);
+            } else {
+                
+                contentWrapedWithSbdh = documentDTO.getFileData();
+            }
             
             if(testEnvironment) {
 
@@ -275,45 +195,56 @@ public class OutboundService extends BaseService{
                     LOGGER.info(" --- Temp File generated for Testing " + testFile.getName());
                 }
                 
-                // generate c2 receipt acknowledgement
-                c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
-                
                 TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
                 
-                transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
-                
-                storeEvidenceOnEPEPPOLPath(transmissionIdentifier,transmissionReponse);
-            } else {
-                
-                try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
+                if(!documentDTO.isEHFDocument()) {
                     
                     // generate c2 receipt acknowledgement
                     c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
+                }
+                
+                transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+                
+                storeEvidenceOnEPEPPOLPath(documentDTO.isEHFDocument(), transmissionIdentifier, transmissionReponse);
+            } else {
+                
+                try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
                     
                     LOGGER.info(" ##### Sending Document : PRODUCTION #####");
                     TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
                     transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
                     
-                    storeEvidenceOnEPEPPOLPath(transmissionIdentifier,transmissionReponse);
+                    if (!documentDTO.isEHFDocument()) {
+
+                        // generate c2 receipt acknowledgement
+                        c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
+                    }
+                    
+                    storeEvidenceOnEPEPPOLPath(documentDTO.isEHFDocument(), transmissionIdentifier, transmissionReponse);
                 }
             }
                         
             LOGGER.info(String.format(" Send Document : SUCCESS \n Transmission Id : %s \n Sender : %s \n Receiver : %s", transmissionIdentifier, documentDTO.getSenderId(), documentDTO.getReceiverId()));
-            putAuditLog(transmissionIdentifier, documentDTO, userId, false, transmissionIdentifier);
+            putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, transmissionIdentifier);
 
         } catch(HTTPException | OxalisException | NoSuchAlgorithmException | PeppolSecurityException e) {
             
-            // generate c2 receipt exception
-            c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
+            if (!isResendDocument) {
+                
+                saveFileInOutBox(documentDTO);
+            }
             
             LOGGER.error(String.format(" Send Document : FAIL  \n Sender : %s \n Receiver : %s", documentDTO.getSenderId(), documentDTO.getReceiverId()), e);
-            putAuditLog(null, documentDTO, userId, false, e.getLocalizedMessage());
+            putAuditLog(null, documentDTO, userId, isResendDocument, e.getLocalizedMessage());
 
         } catch(Exception e) {
             
-            // generate c2 receipt exception
-            c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
-            
+            if (!documentDTO.isEHFDocument()) {
+                
+                // generate c2 receipt exception
+                c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
+            }
+
             LOGGER.error(" *** Exception : Unable to send Document *** " , e);
             throw e;
         } finally {
@@ -329,20 +260,15 @@ public class OutboundService extends BaseService{
     
     
     private byte[] wrapContentWithHeader(DocumentDTO documentDTO, eu.sendregning.oxalis.CustomMain obj) throws Exception {
-        if (documentDTO.isIsSDB()) {
 
-            String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
-            PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
-            return obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
-        } else {
-
-            return documentDTO.getFileData();
-        }
+        String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
+        PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
+        return obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
     }
     
-    private void storeEvidenceOnEPEPPOLPath(String name, no.difi.oxalis.api.outbound.TransmissionResponse transmissionReponse) throws IOException, EvidenceException {
+    private void storeEvidenceOnEPEPPOLPath(boolean isEhf, String name, no.difi.oxalis.api.outbound.TransmissionResponse transmissionReponse) throws IOException, EvidenceException {
         
-        File evidence = evidence = File.createTempFile(name, ".receipt.dat");
+        File evidence = File.createTempFile(name, ".receipt.dat");
 
         try (FileOutputStream outputStream = new FileOutputStream(evidence)) {
 
@@ -350,8 +276,29 @@ public class OutboundService extends BaseService{
         }
 
         // move to epeppol receipt location
-        evidence.renameTo(new File(ePEPPOLReceiptPath + File.separator + evidence.getName()));
+        evidence.renameTo(new File((isEhf? evidencePath : ePEPPOLReceiptPath) + File.separator + evidence.getName()));
         
+    }
+    
+    private boolean performValidation(DocumentDTO documentDTO) throws IOException, Exception {
+        
+        // perform a validation 
+         EHFSchemaValidator.setClientUrl(validatorURL);
+         
+         String validatorResult = EHFSchemaValidator.validateEhfXml(IOUtils.toString(documentDTO.getFileData(), CharEncoding.UTF_8));
+         boolean valid = true;
+         try {
+            
+             valid = isValidEHF(validatorResult);
+         } catch (Exception ex) {
+             throw new RuntimeException("Unable to validate Document",ex);
+         }
+         
+         if(!valid) { 
+             throw new RuntimeException("Invalid Document");
+         }
+         
+         return valid;
     }
      
     private boolean isValidEHF(String jsonString) {
@@ -407,13 +354,21 @@ public class OutboundService extends BaseService{
      
      private void saveFileInOutBox(DocumentDTO documentDTO) throws IOException {
 
+         String fileLocation = outboundMsgDir;
+         
+         if(!documentDTO.isEHFDocument()) {
+             
+             fileLocation = outboundPaymentMsgDir;
+         }
+         
+         
         try {
 
-            if (new File(this.outboundMsgDir).exists()) {
+            if (new File(fileLocation).exists()) {
                 
                 String fileName = String.format("%s_%s_%s.%s", documentDTO.getSenderId().replace(":", "-"), documentDTO.getReceiverId().replace(":", "-"), UUID.randomUUID().toString(), XML_EXT);  // Ex: 0192-986920080_0192-986920080_e880a1de-345d-492e-bcf4-a0a0a800d011.xml
 
-                File file = new File(String.format("%s/%s", outboundMsgDir, fileName));
+                File file = new File(String.format("%s/%s", fileLocation, fileName));
                 
                 try (FileOutputStream fos = new FileOutputStream(file)) {
                     
@@ -791,9 +746,15 @@ public class OutboundService extends BaseService{
      * resend message
      * @throws Exception
      */
-     public void resend() {
+     public void resend(boolean payment) {
 
-        File dir = new File(outboundMsgDir);
+        File dir = null;
+        if(payment) {
+            dir = new File(outboundPaymentMsgDir);
+        } else { 
+            dir = new File(outboundMsgDir);
+        }
+        
         List<File> files;
         files = (List<File>) FileUtils.listFiles(dir, EXT_ARR, true);
 
@@ -807,6 +768,7 @@ public class OutboundService extends BaseService{
                 documentDTO.setFileData(IOUtils.toByteArray(fileInputStream));
                 documentDTO.setLicenseId("PREPAID");
                 documentDTO.setFileName(file.getName());
+                documentDTO.setEHFDocument(!payment);
 
                 String[] fileNameParts = file.getName().split("_");
 
@@ -837,35 +799,57 @@ public class OutboundService extends BaseService{
                 if (transmissionID != null) {                    
                     file.delete();
                 } else {
-                    if (!canRetry(file)) {
-                        moveFileToFollowup(file);
+                    if (!canRetry(file,payment)) {
+                        moveFileToFollowup(file,payment);
                     }                    
                 }
             }
         }
     }
      
-     private void moveFileToFollowup(File outBoundFile) {
+     private void moveFileToFollowup(File outBoundFile, boolean payment) {
 
         try {
 
-            if (outBoundFile.exists()) {
+            if (outBoundFile.exists() && !payment) {
                 outBoundFile.renameTo(new File(String.format("%s/%s", followUpMsgDir, outBoundFile.getName())));
                 LOGGER.info(" File moved to followup : " + outBoundFile.getName() );
+            }
+            
+            if(payment) {
+                
+                try(FileInputStream in = new FileInputStream(outBoundFile)) {
+                    
+                    RuntimeException exp = new RuntimeException("Timeout C2");
+                    
+                    // generate c2 receipt exception
+                    c2ReceiptGenerator.generateExceptionFromSDB(IOUtils.toByteArray(in), exp);
+                }
+                
+                outBoundFile.delete();
             }
         } catch (Exception e) {
            LOGGER.warn(" Problem in moving file to followup " , e);
         }
      }
 
-    private boolean canRetry(File outBoundFile) {
+    private boolean canRetry(File outBoundFile, boolean payment) {
 
         try {
             
             BasicFileAttributes attr = Files.readAttributes(outBoundFile.toPath(), BasicFileAttributes.class);
             final Instant toInstant = attr.creationTime().toInstant();
+            
+            long minutes = Duration.between(toInstant, Instant.now()).toMinutes();
+            
+            if(payment && minutes >= 30) {
+                
+                LOGGER.info(" Payment maximum retry attemt reached : " + outBoundFile.getName());
+                return false;
+            }
+            
             long hours = Duration.between(toInstant, Instant.now()).toHours();
-
+            
             if (hours >= 24) {
 
                 LOGGER.info(" Maximum retry attemt reached : " + outBoundFile.getName());
