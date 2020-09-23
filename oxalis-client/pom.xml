@@ -262,6 +262,22 @@
                             <generatePackage>ehandel.no.reminder</generatePackage>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>payment-generate</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <extension>true</extension>
+                            <strict>false</strict>
+                            <forceRegenerate>true</forceRegenerate>
+                            <schemaDirectory>src/main/resources/ehandel/PaymentExtras</schemaDirectory>
+                            <schemaIncludes>
+                                <include>PaymentExtras.xsd</include>
+                            </schemaIncludes>
+                            <generatePackage>ehandel.no.paymentextras</generatePackage>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
