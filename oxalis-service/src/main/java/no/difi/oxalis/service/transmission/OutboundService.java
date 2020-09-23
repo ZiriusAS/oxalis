@@ -159,10 +159,10 @@ public class OutboundService extends BaseService{
      public String sendDocument(DocumentDTO documentDTO, String userId, boolean isResendDocument) throws IOException,
             ClassNotFoundException, Exception {
         
-         return sendEPEPPOLDocument(documentDTO, userId, isResendDocument);
+         return send(documentDTO, userId, isResendDocument, false);
     }
      
-    public String sendEPEPPOLDocument(DocumentDTO documentDTO, String userId, boolean isResendDocument) throws IOException,
+    public String send(DocumentDTO documentDTO, String userId, boolean isResendDocument, boolean enhanced) throws IOException,
             ClassNotFoundException, Exception {
         
         if(documentDTO.isEHFDocument()) {
@@ -197,7 +197,7 @@ public class OutboundService extends BaseService{
                 
                 TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
                 
-                if(!documentDTO.isEHFDocument()) {
+                if(enhanced) {
                     
                     // generate c2 receipt acknowledgement
                     c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
@@ -205,7 +205,7 @@ public class OutboundService extends BaseService{
                 
                 transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
                 
-                storeEvidenceOnEPEPPOLPath(documentDTO.isEHFDocument(), transmissionIdentifier, transmissionReponse);
+                storeEvidenceOnEPEPPOLPath(enhanced, transmissionIdentifier, transmissionReponse);
             } else {
                 
                 try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
@@ -214,13 +214,13 @@ public class OutboundService extends BaseService{
                     TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
                     transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
                     
-                    if (!documentDTO.isEHFDocument()) {
+                    if (enhanced) {
 
                         // generate c2 receipt acknowledgement
                         c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
                     }
                     
-                    storeEvidenceOnEPEPPOLPath(documentDTO.isEHFDocument(), transmissionIdentifier, transmissionReponse);
+                    storeEvidenceOnEPEPPOLPath(enhanced, transmissionIdentifier, transmissionReponse);
                 }
             }
                         
@@ -231,7 +231,7 @@ public class OutboundService extends BaseService{
             
             if (!isResendDocument) {
                 
-                saveFileInOutBox(documentDTO);
+                saveFileInOutBox(documentDTO,enhanced);
             }
             
             LOGGER.error(String.format(" Send Document : FAIL  \n Sender : %s \n Receiver : %s", documentDTO.getSenderId(), documentDTO.getReceiverId()), e);
@@ -239,7 +239,7 @@ public class OutboundService extends BaseService{
 
         } catch(Exception e) {
             
-            if (!documentDTO.isEHFDocument()) {
+            if (enhanced) {
                 
                 // generate c2 receipt exception
                 c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
@@ -266,7 +266,7 @@ public class OutboundService extends BaseService{
         return obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
     }
     
-    private void storeEvidenceOnEPEPPOLPath(boolean isEhf, String name, no.difi.oxalis.api.outbound.TransmissionResponse transmissionReponse) throws IOException, EvidenceException {
+    private void storeEvidenceOnEPEPPOLPath(boolean enhanced, String name, no.difi.oxalis.api.outbound.TransmissionResponse transmissionReponse) throws IOException, EvidenceException {
         
         File evidence = File.createTempFile(name, ".receipt.dat");
 
@@ -276,7 +276,7 @@ public class OutboundService extends BaseService{
         }
 
         // move to epeppol receipt location
-        evidence.renameTo(new File((isEhf? evidencePath : ePEPPOLReceiptPath) + File.separator + evidence.getName()));
+        evidence.renameTo(new File((!enhanced? evidencePath : ePEPPOLReceiptPath) + File.separator + evidence.getName()));
         
     }
     
@@ -356,7 +356,7 @@ public class OutboundService extends BaseService{
         }
     }
      
-     private void saveFileInOutBox(DocumentDTO documentDTO) throws IOException {
+     private void saveFileInOutBox(DocumentDTO documentDTO, boolean enhanced) throws IOException {
 
          String fileLocation = outboundMsgDir;
          
@@ -370,7 +370,7 @@ public class OutboundService extends BaseService{
 
             if (new File(fileLocation).exists()) {
                 
-                String fileName = String.format("%s_%s_%s.%s", documentDTO.getSenderId().replace(":", "-"), documentDTO.getReceiverId().replace(":", "-"), UUID.randomUUID().toString(), XML_EXT);  // Ex: 0192-986920080_0192-986920080_e880a1de-345d-492e-bcf4-a0a0a800d011.xml
+                String fileName = String.format("%s_%s_%s_%s.%s", documentDTO.getSenderId().replace(":", "-"), documentDTO.getReceiverId().replace(":", "-"), UUID.randomUUID().toString(), enhanced, XML_EXT);  // Ex: 0192-986920080_0192-986920080_e880a1de-345d-492e-bcf4-a0a0a800d011.xml
 
                 File file = new File(String.format("%s/%s", fileLocation, fileName));
                 
@@ -884,6 +884,7 @@ public class OutboundService extends BaseService{
         for (File file : files) {
 
             String transmissionID = null;
+            String enhanced = "";
             LOGGER.info(" Resend Document : " + file.getName());
             try (FileInputStream fileInputStream = new FileInputStream(file.getAbsolutePath())) {
 
@@ -895,16 +896,21 @@ public class OutboundService extends BaseService{
 
                 String[] fileNameParts = file.getName().split("_");
 
-                if (fileNameParts != null && fileNameParts.length > 2) {
+                if (fileNameParts != null && fileNameParts.length > 3) {
 
                     String senderId = fileNameParts[0].replace("-", ":"); // replace - from sender Ex : 0192-986920080 to 0192:986920080
                     String reciverId = fileNameParts[1].replace("-", ":"); // replace - from reciver Ex : 0192-986920080 to 0192:986920080
-
+                    enhanced = fileNameParts[3];
+                    
                     documentDTO.setSenderId(senderId);
                     documentDTO.setReceiverId(reciverId);
 
-                    transmissionID = sendDocument(documentDTO, DS_NAME, true);
-
+                    if (enhanced != null && enhanced.equals("true.xml")) {
+                        transmissionID = send(documentDTO, DS_NAME, true, true);
+                    } else {
+                        transmissionID = sendDocument(documentDTO, DS_NAME, true);
+                    }
+                    
                     if (transmissionID != null) {                        
                         LOGGER.info(" Resend : SUCCESS : " + file.getName() + " ==> " + transmissionID);
                     } else {
@@ -923,23 +929,23 @@ public class OutboundService extends BaseService{
                     file.delete();
                 } else {
                     if (!canRetry(file,payment)) {
-                        moveFileToFollowup(file,payment);
+                        moveFileToFollowup(file,payment || enhanced.equals("true.xml"));
                     }                    
                 }
             }
         }
     }
      
-     private void moveFileToFollowup(File outBoundFile, boolean payment) {
+     private void moveFileToFollowup(File outBoundFile, boolean enhanced) {
 
         try {
 
-            if (outBoundFile.exists() && !payment) {
+            if (outBoundFile.exists() && !enhanced) {
                 outBoundFile.renameTo(new File(String.format("%s/%s", followUpMsgDir, outBoundFile.getName())));
                 LOGGER.info(" File moved to followup : " + outBoundFile.getName() );
             }
             
-            if(payment) {
+            if(enhanced) {
                 
                 try(FileInputStream in = new FileInputStream(outBoundFile)) {
                     

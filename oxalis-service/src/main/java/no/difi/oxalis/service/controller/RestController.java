@@ -57,6 +57,7 @@ public class RestController extends BaseController {
         try {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
             String userId = sc.getUserPrincipal().getName();
+            documentDTO.setEHFDocument(true);
             String result = service.sendDocument(documentDTO, userId, false);
             
             byte[] reponse = respond(result);
@@ -76,6 +77,7 @@ public class RestController extends BaseController {
 
         try {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
+            documentDTO.setEHFDocument(true);
             String userId = sc.getUserPrincipal().getName();
             String result = service.sendDocument(documentDTO, userId, false);
             
@@ -96,6 +98,7 @@ public class RestController extends BaseController {
 
         try {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
+            documentDTO.setEHFDocument(true);
             String userId = sc.getUserPrincipal().getName();
             String result = service.sendDocument(documentDTO, userId, false);
             
@@ -617,7 +620,7 @@ public class RestController extends BaseController {
         try {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
             String userId = sc.getUserPrincipal().getName();
-            String result = service.sendEPEPPOLDocument(documentDTO, userId, false);
+            String result = service.send(documentDTO, userId, false, true);
             
             byte[] reponse = respond(result);
             return Response.ok(reponse).build();

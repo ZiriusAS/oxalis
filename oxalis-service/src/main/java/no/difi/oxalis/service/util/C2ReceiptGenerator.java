@@ -70,7 +70,7 @@ public class C2ReceiptGenerator {
         
         C2ZiriusReceptionAcknowledgementType ack = generateAcknowledgement(sdbh);
         
-        QName name = new QName("C2ZiriusReceptionAcknowledgement");
+        QName name = new QName("urn:fdc:difi.no:2017:payment:extras-1","C2ZiriusReceptionAcknowledgement");
             
         JAXBElement<C2ZiriusReceptionAcknowledgementType> element 
                 = new JAXBElement<C2ZiriusReceptionAcknowledgementType>(name,C2ZiriusReceptionAcknowledgementType.class, ack);
@@ -92,7 +92,7 @@ public class C2ReceiptGenerator {
         C2ZiriusHandlingExceptionType exception = generateExceptionAcknowledgement(sdbh, 
                 ex.getClass().toString(), ex.getMessage());
         
-        QName name = new QName("C2ZiriusHandlingException");
+        QName name = new QName("urn:fdc:difi.no:2017:payment:extras-1", "C2ZiriusHandlingException");
             
         JAXBElement<C2ZiriusHandlingExceptionType> element 
                 = new JAXBElement<C2ZiriusHandlingExceptionType>(name,C2ZiriusHandlingExceptionType.class, exception);
