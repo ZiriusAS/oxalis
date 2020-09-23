@@ -165,9 +165,9 @@ public class OutboundService extends BaseService{
     public String send(DocumentDTO documentDTO, String userId, boolean isResendDocument, boolean enhanced) throws IOException,
             ClassNotFoundException, Exception {
         
-        if(documentDTO.isEHFDocument()) {
-            performValidation(documentDTO);
-        }
+//        if(documentDTO.isEHFDocument()) {
+//            performValidation(documentDTO);
+//        }
          
         File testFile = null;
         eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
@@ -225,7 +225,7 @@ public class OutboundService extends BaseService{
             }
                         
             LOGGER.info(String.format(" Send Document : SUCCESS \n Transmission Id : %s \n Sender : %s \n Receiver : %s", transmissionIdentifier, documentDTO.getSenderId(), documentDTO.getReceiverId()));
-            putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, transmissionIdentifier);
+            //putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, transmissionIdentifier);
 
         } catch(HTTPException | OxalisException | NoSuchAlgorithmException | PeppolSecurityException e) {
             
@@ -235,7 +235,7 @@ public class OutboundService extends BaseService{
             }
             
             LOGGER.error(String.format(" Send Document : FAIL  \n Sender : %s \n Receiver : %s", documentDTO.getSenderId(), documentDTO.getReceiverId()), e);
-            putAuditLog(null, documentDTO, userId, isResendDocument, e.getLocalizedMessage());
+            //putAuditLog(null, documentDTO, userId, isResendDocument, e.getLocalizedMessage());
 
         } catch(Exception e) {
             
@@ -328,16 +328,16 @@ public class OutboundService extends BaseService{
         
         try {
 
-            String content = IOUtils.toString(documentContent, CharEncoding.UTF_8);
-            if (content.contains("CreditNote>")) {
+           // String content = IOUtils.toString(documentContent, CharEncoding.UTF_8);
+           // if (content.contains("CreditNote>")) {
                 return EHFConstants.EHF_THREE_DOT_ZERO_CREDIT_NOTE.getValue();
-            } else if (content.contains("Order>")) {
-                return EHFConstants.EHF_THREE_DOT_ZERO_ORDER.getValue();
-            } else if (content.contains("OrderResponse>")) {
-                return EHFConstants.EHF_THREE_DOT_ZERO_ORDER_RESPONSE.getValue();
-            }
-
-            return EHFConstants.EHF_THREE_DOT_ZERO_INVOICE.getValue();
+//            } else if (content.contains("Order>")) {
+//                return EHFConstants.EHF_THREE_DOT_ZERO_ORDER.getValue();
+//            } else if (content.contains("OrderResponse>")) {
+//                return EHFConstants.EHF_THREE_DOT_ZERO_ORDER_RESPONSE.getValue();
+//            }
+//
+//            return EHFConstants.EHF_THREE_DOT_ZERO_INVOICE.getValue();
         } catch (Exception e) {
             LOGGER.warn(" !!!! Unable to file Document type.Hence considering this as Invoice ");
             return EHFConstants.EHF_THREE_DOT_ZERO_INVOICE.getValue();
