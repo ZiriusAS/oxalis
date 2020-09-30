@@ -170,7 +170,9 @@ public class OutboundService extends BaseService{
 //        }
          
         File testFile = null;
+        LOGGER.info("### Initialize CustomMain object ###");
         eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
+        LOGGER.info("### CustomMain object created ###");
         
         String transmissionIdentifier = null;
         byte[] contentWrapedWithSbdh = null;
@@ -180,32 +182,44 @@ public class OutboundService extends BaseService{
             if (documentDTO.isEHFDocument()) {
                 
                 contentWrapedWithSbdh = wrapContentWithHeader(documentDTO,obj);
+                LOGGER.info("### SBDH wrapper content generated size : "+contentWrapedWithSbdh.length+" ###");
             } else {
                 
                 contentWrapedWithSbdh = documentDTO.getFileData();
             }
             
+            documentDTO.setFileData(null);
+            
             if(testEnvironment) {
 
-                LOGGER.info(" ##### Sending Document : TEST #####");
+                
+                
+                LOGGER.info("### content into temp file ###");
                 testFile = File.createTempFile(UUID.randomUUID().toString(), ".xml");
                 try (FileOutputStream fos = new FileOutputStream(testFile)) {
                     
                     fos.write(contentWrapedWithSbdh);
                     LOGGER.info(" --- Temp File generated for Testing " + testFile.getName());
                 }
+                LOGGER.info("### content into temp file completed ###");
+                
+                contentWrapedWithSbdh = null;
+                
+                LOGGER.info(" ##### Sending Document : TEST #####");
                 
                 TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
                 
-                if(enhanced) {
-                    
-                    // generate c2 receipt acknowledgement
-                    c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
-                }
+                LOGGER.info(" ##### Sending Document : TEST Completed #####");
                 
-                transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+//                if(enhanced) {
+//                    
+//                    // generate c2 receipt acknowledgement
+//                    c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
+//                }
                 
-                storeEvidenceOnEPEPPOLPath(enhanced, transmissionIdentifier, transmissionReponse);
+               // transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
+                
+                // storeEvidenceOnEPEPPOLPath(enhanced, transmissionIdentifier, transmissionReponse);
             } else {
                 
                 try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
@@ -214,36 +228,38 @@ public class OutboundService extends BaseService{
                     TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
                     transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
                     
-                    if (enhanced) {
-
-                        // generate c2 receipt acknowledgement
-                        c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
-                    }
+//                    if (enhanced) {
+//
+//                        // generate c2 receipt acknowledgement
+//                        c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
+//                    }
                     
                     storeEvidenceOnEPEPPOLPath(enhanced, transmissionIdentifier, transmissionReponse);
                 }
             }
-                        
+                  
+            contentWrapedWithSbdh = null;
+            
             LOGGER.info(String.format(" Send Document : SUCCESS \n Transmission Id : %s \n Sender : %s \n Receiver : %s", transmissionIdentifier, documentDTO.getSenderId(), documentDTO.getReceiverId()));
             //putAuditLog(transmissionIdentifier, documentDTO, userId, isResendDocument, transmissionIdentifier);
 
         } catch(HTTPException | OxalisException | NoSuchAlgorithmException | PeppolSecurityException e) {
             
-            if (!isResendDocument) {
-                
-                saveFileInOutBox(documentDTO,enhanced);
-            }
+//            if (!isResendDocument) {
+//                
+//                saveFileInOutBox(documentDTO,enhanced);
+//            }
             
             LOGGER.error(String.format(" Send Document : FAIL  \n Sender : %s \n Receiver : %s", documentDTO.getSenderId(), documentDTO.getReceiverId()), e);
             //putAuditLog(null, documentDTO, userId, isResendDocument, e.getLocalizedMessage());
 
         } catch(Exception e) {
             
-            if (enhanced) {
-                
-                // generate c2 receipt exception
-                c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
-            }
+//            if (enhanced) {
+//                
+//                // generate c2 receipt exception
+//                c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
+//            }
 
             LOGGER.error(" *** Exception : Unable to send Document *** " , e);
             throw e;

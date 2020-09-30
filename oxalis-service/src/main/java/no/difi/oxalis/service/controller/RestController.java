@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.StreamingOutput;
 import eu.peppol.outbound.api.ReceiptDTO;
+import java.io.FileOutputStream;
 import no.difi.oxalis.service.transmission.OutboundService;
 import no.difi.oxalis.service.util.Log;
 import no.difi.vefa.peppol.common.model.Endpoint;
@@ -618,7 +619,22 @@ public class RestController extends BaseController {
     public Response sendEPEPPOL(@Context SecurityContext sc, byte[] data) {
 
         try {
+            Log.info("### sending - started ###");
+            
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
+            
+            Log.info("### Document object - deserialized ###");
+            
+            
+            File file = new File(documentDTO.getFileName());
+            
+            try(FileInputStream in = new FileInputStream(file)) {
+                
+                documentDTO.setFileData(IOUtils.toByteArray(in));
+            }
+            
+            Log.info("### File Data read from the document ###");
+            
             String userId = sc.getUserPrincipal().getName();
             String result = service.send(documentDTO, userId, false, true);
             

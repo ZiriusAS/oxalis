@@ -70,7 +70,7 @@ public class DefaultPersister implements PersisterHandler {
         
         Path path = inboundFolder.resolve(
                 String.format("%s.doc.xml", FileUtils.filterString(transmissionIdentifier.getIdentifier())));
-
+        
         // To resolve concurrent read write probelm, write the file to temp location 
         Path temp = File.createTempFile(FileUtils.filterString(transmissionIdentifier.getIdentifier()), ".doc.xml").toPath();
         try (OutputStream outputStream = Files.newOutputStream(temp)) {
