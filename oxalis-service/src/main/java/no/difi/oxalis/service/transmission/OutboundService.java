@@ -184,6 +184,7 @@ public class OutboundService extends BaseService{
                 
                 contentWrapedWithSbdh = documentDTO.getFileData();
             }
+            documentDTO.setFileData(null);
             
             if(testEnvironment) {
 
@@ -194,6 +195,7 @@ public class OutboundService extends BaseService{
                     fos.write(contentWrapedWithSbdh);
                     LOGGER.info(" --- Temp File generated for Testing " + testFile.getName());
                 }
+                contentWrapedWithSbdh = null;
                 
                 TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
                 
