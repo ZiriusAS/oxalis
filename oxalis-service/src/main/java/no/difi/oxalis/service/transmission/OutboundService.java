@@ -46,7 +46,10 @@ import no.difi.oxalis.service.model.AuditEvent;
 import no.difi.oxalis.service.model.AuditLog;
 import no.difi.oxalis.service.model.MessageInfo;
 import eu.peppol.outbound.api.ReceiptDTO;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import no.difi.oxalis.api.lang.EvidenceException;
+import no.difi.oxalis.service.util.AsynchronousExecUtil;
 import no.difi.oxalis.service.util.C2ReceiptGenerator;
 import no.difi.oxalis.service.util.OutboundConstants;
 import no.difi.oxalis.service.util.Property;
@@ -160,15 +163,35 @@ public class OutboundService extends BaseService{
             ClassNotFoundException, Exception {
         
          return send(documentDTO, userId, isResendDocument, false);
+     }
+     
+    public Future<String> sendAsychronous(final DocumentDTO documentDTO, final String userId, final boolean isResendDocument, 
+            final boolean enhanced) throws IOException, ClassNotFoundException, Exception {
+        
+        File tempFile = File.createTempFile(documentDTO.getFileName(), "xml");
+        
+        if(documentDTO.isEHFDocument()) {
+            performValidation(documentDTO);
+        }
+        
+        eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
+        
+        String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
+        PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
+         obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
+        
+        return AsynchronousExecUtil.call(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return send(documentDTO, userId, isResendDocument, enhanced);
+            }
+
+        });
     }
      
     public String send(DocumentDTO documentDTO, String userId, boolean isResendDocument, boolean enhanced) throws IOException,
             ClassNotFoundException, Exception {
         
-        if(documentDTO.isEHFDocument()) {
-            performValidation(documentDTO);
-        }
-         
         File testFile = null;
         eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
         
