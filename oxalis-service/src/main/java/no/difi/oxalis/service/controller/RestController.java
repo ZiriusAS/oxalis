@@ -620,7 +620,7 @@ public class RestController extends BaseController {
         try {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
             String userId = sc.getUserPrincipal().getName();
-            String result = service.send(documentDTO, userId, false, true);
+            String result = service.sendAsychronous(documentDTO, userId, false, true);
             
             byte[] reponse = respond(result);
             return Response.ok(reponse).build();

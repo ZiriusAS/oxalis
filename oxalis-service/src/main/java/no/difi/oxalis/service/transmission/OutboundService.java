@@ -5,6 +5,7 @@
  */
 package no.difi.oxalis.service.transmission;
 
+import com.zirius.zerp.rc.StandardBusinessDocumentHeader;
 import ehandel.no.EHFConstants;
 import ehandel.no.util.StringUtils;
 import eu.peppol.outbound.api.DocumentDTO;
@@ -162,52 +163,51 @@ public class OutboundService extends BaseService{
      public String sendDocument(DocumentDTO documentDTO, String userId, boolean isResendDocument) throws IOException,
             ClassNotFoundException, Exception {
         
-         return send(documentDTO, userId, isResendDocument, false);
+         return sendAsychronous(documentDTO, userId, isResendDocument, false);
      }
      
-    public Future<String> sendAsychronous(final DocumentDTO documentDTO, final String userId, final boolean isResendDocument, 
+    public String sendAsychronous(final DocumentDTO documentDTO, final String userId, final boolean isResendDocument, 
             final boolean enhanced) throws IOException, ClassNotFoundException, Exception {
-        
-        File tempFile = File.createTempFile(documentDTO.getFileName(), "xml");
-        
+
         if(documentDTO.isEHFDocument()) {
             performValidation(documentDTO);
         }
         
         eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
         
-        String documentType = identifyDocumentTypeFromContent(documentDTO.getFileData());
-        PeppolStandardBusinessHeader sbdh = obj.createSBDH(documentDTO.getSenderId(), documentDTO.getReceiverId(), documentType, EHFConstants.EHF_THREE_DOT_ZERO_PROFILE_ID.getValue());
-         obj.wrapPayLoadWithSBDH(documentDTO.getFileData(), sbdh);
+        byte[] contentWrapedWithSbdh  = null;
+        if (documentDTO.isEHFDocument()) {
+            
+            contentWrapedWithSbdh = wrapContentWithHeader(documentDTO,obj);
+        } else {
+
+            contentWrapedWithSbdh = documentDTO.getFileData();
+        }
         
-        return AsynchronousExecUtil.call(new Callable<String>() {
+        documentDTO.setFileData(contentWrapedWithSbdh);
+        
+        final StandardBusinessDocumentHeader sbdh = c2ReceiptGenerator.extractSDBH(contentWrapedWithSbdh);
+        
+        AsynchronousExecUtil.call(new Callable<String>() {
             @Override
             public String call() throws Exception {
-                return send(documentDTO, userId, isResendDocument, enhanced);
+                return send(documentDTO, userId, isResendDocument, enhanced,sbdh);
             }
 
         });
+        
+        return c2ReceiptGenerator.getInstanceIdentifier(sbdh);
     }
      
-    public String send(DocumentDTO documentDTO, String userId, boolean isResendDocument, boolean enhanced) throws IOException,
+    public String send(DocumentDTO documentDTO, String userId, boolean isResendDocument, boolean enhanced, StandardBusinessDocumentHeader sbdh) throws IOException,
             ClassNotFoundException, Exception {
         
         File testFile = null;
         eu.sendregning.oxalis.CustomMain obj = CustomMain.getInstance(testEnvironment, oxalisServerUrl, oxalisCertificatePath);
         
         String transmissionIdentifier = null;
-        byte[] contentWrapedWithSbdh = null;
 
         try {
-            
-            if (documentDTO.isEHFDocument()) {
-                
-                contentWrapedWithSbdh = wrapContentWithHeader(documentDTO,obj);
-            } else {
-                
-                contentWrapedWithSbdh = documentDTO.getFileData();
-            }
-            documentDTO.setFileData(null);
             
             if(testEnvironment) {
 
@@ -215,17 +215,16 @@ public class OutboundService extends BaseService{
                 testFile = File.createTempFile(UUID.randomUUID().toString(), ".xml");
                 try (FileOutputStream fos = new FileOutputStream(testFile)) {
                     
-                    fos.write(contentWrapedWithSbdh);
+                    fos.write(documentDTO.getFileData());
                     LOGGER.info(" --- Temp File generated for Testing " + testFile.getName());
                 }
-                contentWrapedWithSbdh = null;
                 
                 TransmissionResponse transmissionReponse = obj.send(testFile.getPath());
                 
                 if(enhanced) {
                     
                     // generate c2 receipt acknowledgement
-                    c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
+                    c2ReceiptGenerator.generateAcknowledgementFromSDB(documentDTO.getFileData());
                 }
                 
                 transmissionIdentifier = transmissionReponse.getTransmissionIdentifier().getIdentifier();
@@ -233,7 +232,7 @@ public class OutboundService extends BaseService{
                 storeEvidenceOnEPEPPOLPath(enhanced, transmissionIdentifier, transmissionReponse);
             } else {
                 
-                try(InputStream inputStream = new ByteArrayInputStream(contentWrapedWithSbdh)) {
+                try(InputStream inputStream = new ByteArrayInputStream(documentDTO.getFileData())) {
                     
                     LOGGER.info(" ##### Sending Document : PRODUCTION #####");
                     TransmissionResponse transmissionReponse = obj.sendDocumentUsingFactory(inputStream);
@@ -242,7 +241,7 @@ public class OutboundService extends BaseService{
                     if (enhanced) {
 
                         // generate c2 receipt acknowledgement
-                        c2ReceiptGenerator.generateAcknowledgementFromSDB(contentWrapedWithSbdh);
+                        c2ReceiptGenerator.generateAcknowledgementFromSDB(documentDTO.getFileData());
                     }
                     
                     storeEvidenceOnEPEPPOLPath(enhanced, transmissionIdentifier, transmissionReponse);
@@ -267,7 +266,7 @@ public class OutboundService extends BaseService{
             if (enhanced) {
                 
                 // generate c2 receipt exception
-                c2ReceiptGenerator.generateExceptionFromSDB(contentWrapedWithSbdh, e);
+                c2ReceiptGenerator.generateExceptionFromSDB(documentDTO.getFileData(), e);
             }
 
             LOGGER.error(" *** Exception : Unable to send Document *** " , e);
@@ -908,7 +907,7 @@ public class OutboundService extends BaseService{
 
         for (File file : files) {
 
-            String transmissionID = null;
+            String messageReference = null;
             String enhanced = "";
             LOGGER.info(" Resend Document : " + file.getName());
             try (FileInputStream fileInputStream = new FileInputStream(file.getAbsolutePath())) {
@@ -917,7 +916,7 @@ public class OutboundService extends BaseService{
                 documentDTO.setFileData(IOUtils.toByteArray(fileInputStream));
                 documentDTO.setLicenseId("PREPAID");
                 documentDTO.setFileName(file.getName());
-                documentDTO.setEHFDocument(!payment);
+                documentDTO.setEHFDocument(false);
 
                 String[] fileNameParts = file.getName().split("_");
 
@@ -931,15 +930,15 @@ public class OutboundService extends BaseService{
                     documentDTO.setReceiverId(reciverId);
 
                     if (enhanced != null && enhanced.equals("true.xml")) {
-                        transmissionID = send(documentDTO, DS_NAME, true, true);
+                        messageReference = sendAsychronous(documentDTO, DS_NAME, true, true);
                     } else {
-                        transmissionID = sendDocument(documentDTO, DS_NAME, true);
+                        messageReference = sendDocument(documentDTO, DS_NAME, true);
                     }
                     
-                    if (transmissionID != null) {                        
-                        LOGGER.info(" Resend : SUCCESS : " + file.getName() + " ==> " + transmissionID);
+                    if (messageReference != null) {                        
+                        LOGGER.info(" Resend : SUCCESS : " + file.getName() + " ==> " + messageReference);
                     } else {
-                        LOGGER.info(" Resend : FAIL : " + file.getName() + " ==> " + transmissionID);
+                        LOGGER.info(" Resend : FAIL : " + file.getName() + " ==> " + messageReference);
                     }
                 } else {
                     LOGGER.info(" Resend : SKIPPED : " + file.getName());
@@ -950,7 +949,7 @@ public class OutboundService extends BaseService{
                 } 
             } finally {
 
-                if (transmissionID != null) {                    
+                if (messageReference != null) {                    
                     file.delete();
                 } else {
                     if (!canRetry(file,payment)) {
