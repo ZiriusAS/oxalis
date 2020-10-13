@@ -115,11 +115,15 @@ class DefaultTransmitter extends Traceable implements Transmitter {
 
     private TransmissionResponse perform(TransmissionMessage transmissionMessage, Span root)
             throws OxalisTransmissionException {
+        
+        log.info("### Transmission Started ###");
         try {
             if (transmissionMessage == null)
                 throw new OxalisTransmissionException("No transmission is provided.");
 
+            log.info("### Transmission verfication begins ###");
             transmissionVerifier.verify(transmissionMessage.getHeader(), Direction.OUT);
+            log.info("### Transmission verfication ended ###");
 
             TransmissionRequest transmissionRequest;
             if (transmissionMessage instanceof TransmissionRequest) {
@@ -128,7 +132,10 @@ class DefaultTransmitter extends Traceable implements Transmitter {
                 // Validate provided certificate
                 if (transmissionRequest.getEndpoint().getCertificate() == null)
                     throw new OxalisTransmissionException("Certificate of receiving access point is not provided.");
+                
+                log.info("### certificate validation begins ###");
                 certificateValidator.validate(Service.AP, transmissionRequest.getEndpoint().getCertificate(), root);
+                log.info("### certificate validation ended ###");
             } else {
                 // Perform lookup using header.
                 Span span = tracer.buildSpan("Fetch endpoint information").asChildOf(root).start();
@@ -151,20 +158,29 @@ class DefaultTransmitter extends Traceable implements Transmitter {
             
             log.warn("### LookUp ended for the trasmission without any error ###");
 
+            log.info("### Span begins ###");
             Span span = tracer.buildSpan("send message").asChildOf(root).start();
             TransmissionResponse transmissionResponse;
             try {
                 TransportProfile transportProfile = transmissionRequest.getEndpoint().getTransportProfile();
+                
+                log.info("### MessageSender Trasmission begins ###");
                 MessageSender messageSender = messageSenderFactory.getMessageSender(transportProfile);
                 transmissionResponse = messageSender.send(transmissionRequest, span);
+               log.info("### MessageSender Trasmission ended ###");
+                
             } catch (OxalisTransmissionException e) {
                 span.setTag("exception", e.getMessage());
+                log.error("### Trasmission failed ###",e);
                 throw e;
             } finally {
                 span.finish();
+                log.info("###Span finished###");
             }
 
+            log.info("### Presist Trasmission details begins ###");
             statisticsService.persist(transmissionRequest, transmissionResponse, root);
+            log.info("### Presist Trasmission details ended ###");
 
             return transmissionResponse;
         } catch (PeppolSecurityException e) {
