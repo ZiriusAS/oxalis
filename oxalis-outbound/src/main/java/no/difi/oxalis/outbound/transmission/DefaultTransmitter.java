@@ -38,6 +38,8 @@ import no.difi.vefa.peppol.common.code.Service;
 import no.difi.vefa.peppol.common.model.Endpoint;
 import no.difi.vefa.peppol.common.model.TransportProfile;
 import no.difi.vefa.peppol.security.lang.PeppolSecurityException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Executes transmission requests by sending the payload to the requested destination.
@@ -68,6 +70,8 @@ class DefaultTransmitter extends Traceable implements Transmitter {
     private final OxalisCertificateValidator certificateValidator;
 
     private final ErrorTracker errorTracker;
+    
+    private final static Logger log = LoggerFactory.getLogger(DefaultTransmitter.class);
 
     @Inject
     public DefaultTransmitter(MessageSenderFactory messageSenderFactory, StatisticsService statisticsService,
@@ -130,16 +134,22 @@ class DefaultTransmitter extends Traceable implements Transmitter {
                 Span span = tracer.buildSpan("Fetch endpoint information").asChildOf(root).start();
                 Endpoint endpoint;
                 try {
+                    
+                    log.warn("### LookUp started for the trasmission ###");
+                    
                     endpoint = lookupService.lookup(transmissionMessage.getHeader(), span);
                     span.setTag("transport profile", endpoint.getTransportProfile().getIdentifier());
                     transmissionRequest = new DefaultTransmissionRequest(transmissionMessage, endpoint);
                 } catch (OxalisTransmissionException e) {
                     span.setTag("exception", e.getMessage());
+                    log.error("### LookUp ended with an error for the trasmission ###",e);
                     throw e;
                 } finally {
                     span.finish();
                 }
             }
+            
+            log.warn("### LookUp ended for the trasmission without any error ###");
 
             Span span = tracer.buildSpan("send message").asChildOf(root).start();
             TransmissionResponse transmissionResponse;
