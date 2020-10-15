@@ -27,6 +27,7 @@ public class DocumentDTO implements Serializable {
     private byte[] fileData;
     private String licenseId;
     private String fileName;
+    private boolean EHFDocument = true;
 
     public String getSenderId() {
         return senderId;
@@ -71,4 +72,13 @@ public class DocumentDTO implements Serializable {
     public boolean isComplete() {
         return ((senderId != null) && (receiverId != null) && (fileData != null));        
     }
+
+    public boolean isEHFDocument() {
+        return EHFDocument;
+    }
+
+    public void setEHFDocument(boolean EHFDocument) {
+        this.EHFDocument = EHFDocument;
+    }
+    
 }

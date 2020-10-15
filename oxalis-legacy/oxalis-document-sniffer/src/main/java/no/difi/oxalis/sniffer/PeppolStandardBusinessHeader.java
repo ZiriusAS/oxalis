@@ -80,6 +80,7 @@ public class PeppolStandardBusinessHeader {
      */
     public static PeppolStandardBusinessHeader createPeppolStandardBusinessHeaderWithNewDate() {
         PeppolStandardBusinessHeader p = new PeppolStandardBusinessHeader();
+        p.setInstanceId(new InstanceId());
         p.setCreationDateAndTime(new Date());
         return p;
     }

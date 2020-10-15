@@ -19,9 +19,10 @@ package ehandel.no;
  */
 public enum OrderResponseCode {
 
-    ORDER_REJECTED("27"), 
-    ORDER_ACCEPTED("29"), 
-    ORDER_ACCEPTED_WITH_CHANGE("30");
+    ORDER_REJECTED("RE"), 
+    ORDER_ACCEPTED("AP"), 
+    CONDITIONALLY_ACCEPTED("CA"),
+    MESSAGE_ACKNOWLEDGEMENT("AB");
 
     private String value;
 

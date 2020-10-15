@@ -6197,7 +6197,7 @@ public final class InvoiceUtils {
                     idCommonBasic = financialAccountType.getID();
                     if (idCommonBasic != null && idCommonBasic.getValue() != null) {
                         
-                        String accountNo = idCommonBasic.getValue().replaceAll("[^A-Za-z0-9()\\[\\]]", "");
+                        String accountNo = idCommonBasic.getValue().replaceAll("[^A-Za-z0-9]", "");;
                         if (idCommonBasic.getSchemeID() != null && EHFConstants.IBAN.getValue().equals(idCommonBasic.getSchemeID())) {
                             bankAccountDTO.setiBanNo(idCommonBasic.getValue());
                         } else if (!accountNo.matches("^[0-9]+")) {

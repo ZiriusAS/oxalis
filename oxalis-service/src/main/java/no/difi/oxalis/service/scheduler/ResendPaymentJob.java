@@ -17,7 +17,7 @@ import org.quartz.JobExecutionException;
  * @author aktharhussainis
  */
 @DisallowConcurrentExecution
-public class ResendJob implements Job {
+public class ResendPaymentJob implements Job {
     
     @Override
     public void execute(JobExecutionContext pArg0) throws JobExecutionException {
@@ -26,7 +26,7 @@ public class ResendJob implements Job {
             
             Log.info("Inside Resend Job...");
             OutboundService outboundService = OutboundService.getInstance();
-            outboundService.resend(false);
+            outboundService.resend(true);
         } catch (Exception ex) {
             Log.error("Exception while resend job: " + ex.getMessage());
         }

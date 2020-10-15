@@ -62,6 +62,7 @@ public enum EHFConstants {
     PAYMENT_MEANS_LIST_AGENCY_ID("NES"),
     GLN("GLN"),
     GTIN("GTIN"),
+    ORDER_EHFV3_GTIN("0160"), // Link to list - https://vefa.difi.no/ehf/g3/codelist/ICD/
     TAX_CATEGORY_SCHEME_ID("UN/ECE 5305"),
     TAX_CATEGORY_TWO_DOT_ONE_SCHEME_ID("UNCL5305"),
     TAX_SCHEME_ID("UN/ECE 5153"),
@@ -83,12 +84,23 @@ public enum EHFConstants {
     DOCUMENT_CURRENCY_CODE_ID("ISO4217"),
     ORDER_RESPONSE_CODE("UNCL1225"),
     COUNTRY_CODE_NORWAY("NO"),
-    ORDER_RESPONSE_ITEM_CLASSIFICATION_CODE("UNSPSC"),
+    ORDER_RESPONSE_ITEM_CLASSIFICATION_CODE("SST"),
     MVA("MVA"),
     ORG("ORG"),
     
+    EHF_THREE_DOT_ZERO_ORDER_COMPANY_ID_SCHEME("0192"),
+    EHF_THREE_DOT_ZERO_ORDER_LEGAL_ENTITY_SCHEME_NAME("Organisasjonsnummer"),
+    
     EHF_THREE_DOT_ZERO_INVOICE("urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1"),
     EHF_THREE_DOT_ZERO_CREDIT_NOTE("urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2::CreditNote##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1"),
+    EHF_THREE_DOT_ZERO_ORDER("urn:oasis:names:specification:ubl:schema:xsd:Order-2::Order##urn:fdc:peppol.eu:poacc:trns:order:3::2.1"),
+    EHF_THREE_DOT_ZERO_ORDER_RESPONSE("urn:oasis:names:specification:ubl:schema:xsd:OrderResponse-2::OrderResponse##urn:fdc:peppol.eu:poacc:trns:order_response:3::2.1"),
+
+    EHF_THREE_DOT_ZERO_ORDER_CUSTOMIZATION_ID("urn:fdc:peppol.eu:poacc:trns:order:3"),
+    EHF_THREE_DOT_ZERO_ORDER_RESPONSE_CUSTOMIZATION_ID("urn:fdc:peppol.eu:poacc:trns:order_response:3"),
+    
+    EHF_THREE_DOT_ZERO_ORDER_PROFILE_ID("urn:fdc:peppol.eu:poacc:bis:ordering:3"),
+    EHF_THREE_DOT_ZERO_ORDER_RESPONSE_PROFILE_ID("urn:fdc:peppol.eu:poacc:bis:ordering:3"),
 
     EHF_THREE_DOT_ZERO_CUSTOMIZATION_ID("urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"),
     EHF_THREE_DOT_ZERO_PROFILE_ID("urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"),

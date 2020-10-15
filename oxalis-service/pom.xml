@@ -190,6 +190,14 @@
             <artifactId>json</artifactId>
             <version>20090211</version>
 	</dependency>
+        
+        <!-- https://mvnrepository.com/artifact/dom4j/dom4j -->
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+            <version>1.6.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -387,6 +395,30 @@
                             <packaging>jar</packaging>
                             <createChecksum>true</createChecksum>
                             <generatePom>true</generatePom>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+           <plugin>
+                <groupId>org.jvnet.jaxb2.maven2</groupId>
+                <artifactId>maven-jaxb2-plugin</artifactId>
+                <version>0.8.1</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <id>rc-generate</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <forceRegenerate>true</forceRegenerate>
+                            <extension>true</extension>
+                            <strict>false</strict>
+                            <schemaDirectory>src/main/resources</schemaDirectory>
+                            <schemaIncludes>
+                                <include>xsd/PaymentExtras.xsd</include>
+                            </schemaIncludes>
+                            <generatePackage>com.zirius.zerp.rc</generatePackage>
                         </configuration>
                     </execution>
                 </executions>
