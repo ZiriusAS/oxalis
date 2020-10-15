@@ -25,6 +25,9 @@ package no.difi.oxalis.outbound.transmission;
 import com.google.inject.Inject;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
+import java.net.MalformedURLException;
+import java.util.UUID;
+import java.util.logging.Level;
 import no.difi.oxalis.api.error.ErrorTracker;
 import no.difi.oxalis.api.lang.OxalisTransmissionException;
 import no.difi.oxalis.api.lookup.LookupService;
@@ -130,12 +133,16 @@ class DefaultTransmitter extends Traceable implements Transmitter {
                     throw new OxalisTransmissionException("Certificate of receiving access point is not provided.");
                 certificateValidator.validate(Service.AP, transmissionRequest.getEndpoint().getCertificate(), root);
             } else {
+                
+                String uuid = UUID.randomUUID().toString();
+                long start = 0L;
+                
                 // Perform lookup using header.
                 Span span = tracer.buildSpan("Fetch endpoint information").asChildOf(root).start();
                 Endpoint endpoint;
                 try {
-                    
-                    log.warn("### LookUp started for the trasmission ###");
+                    start = System.currentTimeMillis();
+                    log.warn(String.format("### LookUp started for the trasmission [ UUID : %s , start time : %s ] ###",uuid,start));
                     
                     endpoint = lookupService.lookup(transmissionMessage.getHeader(), span);
                     span.setTag("transport profile", endpoint.getTransportProfile().getIdentifier());
@@ -147,10 +154,17 @@ class DefaultTransmitter extends Traceable implements Transmitter {
                 } finally {
                     span.finish();
                 }
+                
+                long end = System.currentTimeMillis();
+                long difference = start - end;
+                log.warn(String.format("### LookUp ended for the trasmission without any error [ UUID : %s, end time : %s, difference : %s] ###", uuid, end, difference));
+                try {
+                    log.warn(String.format("### LookUp URL [ UUID : %s, URL : %s] ###", uuid, endpoint.getAddress().toURL().toExternalForm()));
+                } catch (MalformedURLException ex) {
+                    log.error(String.format("### LookUp URL from the endpoint malformed [ UUID : %s ]",uuid));
+                }
             }
             
-            log.warn("### LookUp ended for the trasmission without any error ###");
-
             Span span = tracer.buildSpan("send message").asChildOf(root).start();
             TransmissionResponse transmissionResponse;
             try {
