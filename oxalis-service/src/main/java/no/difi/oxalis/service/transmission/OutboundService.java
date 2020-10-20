@@ -184,7 +184,6 @@ public class OutboundService extends BaseService{
                 
                 contentWrapedWithSbdh = documentDTO.getFileData();
             }
-            documentDTO.setFileData(null);
             
             if(testEnvironment) {
 
