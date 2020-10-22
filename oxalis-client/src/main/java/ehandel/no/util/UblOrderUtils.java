@@ -1,5 +1,5 @@
 /*
- * @(#)OrderUtils.java
+ * @(#)UblOrderUtils.java
  *
  * Copyright (c) 2013, Zirius AS.
  * All rights reserved. 
@@ -28,6 +28,7 @@ import ehandel.no.dto.AddressDTO;
 import ehandel.no.dto.AllowanceChargeDTO;
 import ehandel.no.dto.CurrencyDTO;
 import ehandel.no.dto.CustomerDTO;
+import ehandel.no.dto.DeliveryDTO;
 import ehandel.no.dto.FileDTO;
 import ehandel.no.dto.InvoiceLineItemDTO;
 import ehandel.no.dto.OrderDTO;
@@ -113,22 +114,25 @@ import ehandel.no.order.UBLVersionIDCommonBasic;
 import ehandel.no.order.ValueCommonBasic;
 import ehandel.no.order.WebsiteURICommonBasic;
 import ehandel.no.order.DeliveryType;
+import ehandel.no.order.RegistrationNameCommonBasic;
 import ehandel.no.order.StartDateCommonBasic;
+import java.util.Date;
 import javax.xml.bind.PropertyException;
+import javax.xml.datatype.XMLGregorianCalendar;
         
 
 /**
- * The Class OrderUtils.
+ * The Class UblOrderUtils.
  * 
  * @author vasanthis
  * @since Oct 18, 2013
  */
-public class OrderUtils {
+public class UblOrderUtils {
 
     /**
      * Instantiates a new order utils.
      */
-    public OrderUtils() {
+    public UblOrderUtils() {
     }
 
     /**
@@ -244,10 +248,17 @@ public class OrderUtils {
             }
 
             documentReferenceType = order.getOriginatorDocumentReference();
-            if (!StringUtils.isEmpty(orderDTO.getOriginatorDocumentReferenceId())) {
+            if (documentReferenceType != null) {
                 orderDTO.setOriginatorDocumentReferenceId(documentReferenceType.getID().getValue());
             }
-
+            
+            List<TaxTotalType> taxTotalTypes = order.getTaxTotals();
+            
+            if(taxTotalTypes != null && taxTotalTypes.size() > 0) {
+                
+                orderDTO.setTaxAmount(taxTotalTypes.get(0).getTaxAmount().getValue().doubleValue());
+            }
+            
             List<DocumentReferenceType> additionalDocumentReferences =
                     order.getAdditionalDocumentReferences();
 
@@ -259,7 +270,6 @@ public class OrderUtils {
 
                 List<FileDTO> files = new ArrayList<FileDTO>();
                 FileDTO fileDTO = null;
-                String fileExt = "";
 
                 for (DocumentReferenceType additionalDocumentReference : additionalDocumentReferences) {
 
@@ -275,23 +285,10 @@ public class OrderUtils {
                         embeddedDocumentBinaryObject =
                                 attachmentType.getEmbeddedDocumentBinaryObject();
                         if (embeddedDocumentBinaryObject != null) {
+                            
+                            fileDTO.setFileName(embeddedDocumentBinaryObject.getFilename());
 
                             fileDTO.setFileContent(embeddedDocumentBinaryObject.getValue());
-
-                            if (embeddedDocumentBinaryObject.getMimeCode() != null) {
-                                fileExt = embeddedDocumentBinaryObject.getMimeCode();
-                                if (!StringUtils.isEmpty(fileExt) && fileExt.indexOf("/") != -1) {
-                                    fileExt = fileExt.substring(fileExt.lastIndexOf("/") + 1);
-                                } else {
-                                    fileExt = EHFConstants.PDF.getValue();
-                                }
-                            }
-                        }
-
-                        idCommonBasic = additionalDocumentReference.getID();
-                        if (idCommonBasic != null) {
-                            fileDTO.setFileName(idCommonBasic.getValue()
-                                    + EHFConstants.DOT.getValue() + fileExt);
                         }
                     }
                     files.add(fileDTO);
@@ -366,7 +363,18 @@ public class OrderUtils {
             if (idCommonBasic != null) {
                 orderResponseDTO.setOrderResponseNo(idCommonBasic.getValue());
             }
-
+            
+            OrderResponseCodeCommonBasic orderResponseCodeCommonBasic = orderResponse.getOrderResponseCode();
+            if (orderResponseCodeCommonBasic != null) {
+                orderResponseDTO.setOrderResponseCode(orderResponseCodeCommonBasic.getValue());
+            }
+            
+            List<OrderReferenceCommonAggregate> orderReferenceCommonAggregates = orderResponse.getOrderReferences();
+            if(orderReferenceCommonAggregates.size() > 0) {
+                IDCommonBasic iDCommonBasic = orderReferenceCommonAggregates.get(0).getID();
+                orderResponseDTO.setOrderReferenceId(iDCommonBasic.getValue());
+            }
+            
             List<NoteCommonBasic> notes = orderResponse.getNotes();
             if(notes.size() > 0) {
                 NoteCommonBasic note = notes.get(0);
@@ -374,8 +382,12 @@ public class OrderUtils {
             }
 
             IssueDateCommonBasic issueDateCommonBasic = orderResponse.getIssueDate();
+            IssueTimeCommonBasic issueTimeCommonBasic = orderResponse.getIssueTime();
             if (issueDateCommonBasic != null) {
-                orderResponseDTO.setOrderResponseIssueDate(ConversionUtils.asDate(issueDateCommonBasic.getValue()));
+                XMLGregorianCalendar date = issueDateCommonBasic.getValue();
+                XMLGregorianCalendar time = issueTimeCommonBasic.getValue();
+                date.setTime(time.getHour(), time.getMinute(), time.getSecond());
+                orderResponseDTO.setOrderResponseIssueDate(ConversionUtils.asDate(date));
             }
 
             mapCurrency(orderResponse, orderResponseDTO);
@@ -400,17 +412,13 @@ public class OrderUtils {
 
             order = new Order();
 
-            UBLVersionIDCommonBasic ublVersionIDCommonBasic = new UBLVersionIDCommonBasic();
-            ublVersionIDCommonBasic.setValue(EHFConstants.UBL_VERSION_ID_TWO_DOT_ONE.getValue());
-            order.setUBLVersionID(ublVersionIDCommonBasic);
-
             CustomizationIDCommonBasic customizationIDCommonBasic =
                     new CustomizationIDCommonBasic();
-            customizationIDCommonBasic.setValue(EHFConstants.ORDER_CUSTOMIZATION_ID.getValue());
+            customizationIDCommonBasic.setValue(EHFConstants.EHF_THREE_DOT_ZERO_ORDER_CUSTOMIZATION_ID.getValue());
             order.setCustomizationID(customizationIDCommonBasic);
 
             ProfileIDCommonBasic profileIDCommonBasic = new ProfileIDCommonBasic();
-            profileIDCommonBasic.setValue(EHFConstants.ORDER_PROFILE_ID.getValue());
+            profileIDCommonBasic.setValue(EHFConstants.EHF_THREE_DOT_ZERO_ORDER_PROFILE_ID.getValue());
             order.setProfileID(profileIDCommonBasic);
 
             IDCommonBasic idCommonBasic = null;
@@ -483,6 +491,7 @@ public class OrderUtils {
                         embeddedDocBinObjCommonBasic.setMimeCode(EHFConstants.PDF_CONTENT_TYPE.getValue());
                     }
                     embeddedDocBinObjCommonBasic.setValue(fileDTO.getFileContent());
+                    embeddedDocBinObjCommonBasic.setFilename(fileDTO.getFileName());
 
                     documentReferenceType = new DocumentReferenceType();
 
@@ -667,12 +676,12 @@ public class OrderUtils {
 
     private static void mapCurrency(OrderResponse orderResponse, OrderResponseDTO orderResponseDTO) {
 
-        OrderResponseCodeCommonBasic orderResponseCodeCommonBasic = orderResponse.getOrderResponseCode();
-
-        if (orderResponseCodeCommonBasic != null) {
-            String currencyName = orderResponseCodeCommonBasic.getValue();
+        DocumentCurrencyCodeCommonBasic documentCurrencyCodeCommonBasic = orderResponse.getDocumentCurrencyCode();
+        
+        if (documentCurrencyCodeCommonBasic != null) {
             CurrencyDTO currencyDTO = new CurrencyDTO();
-            currencyDTO.setCurrencyCode(currencyName);
+            currencyDTO.setCurrencyName(documentCurrencyCodeCommonBasic.getName());
+            currencyDTO.setCurrencyCode(documentCurrencyCodeCommonBasic.getValue());
             orderResponseDTO.setCurrencyDTO(currencyDTO);
         }
     }
@@ -730,7 +739,7 @@ public class OrderUtils {
      * @param customerDTO the customer dto
      * @return the buyer customer party
      */
-    private static CustomerPartyType getBuyerCustomerParty(CustomerDTO customerDTO) {
+    private static CustomerPartyType getBuyerCustomerParty(CustomerDTO customerDTO, boolean isOrder) {
 
         PartyType party = new PartyType();
         PartyType payeePartyType = new PartyType();
@@ -754,7 +763,7 @@ public class OrderUtils {
 
         if (!StringUtils.isEmpty(customerDTO.getEndpointId())) {
             endpointIDCB = new EndpointIDCommonBasic();
-            endpointIDCB.setSchemeID(country + ":" + EHFConstants.SCHEME_ID.getValue());
+            endpointIDCB.setSchemeID(customerDTO.getEaID());
             endpointIDCB.setValue(customerDTO.getEndpointId());
             party.setEndpointID(endpointIDCB);
         }
@@ -776,30 +785,17 @@ public class OrderUtils {
             PartyNameCommonAggregate partyName = new PartyNameCommonAggregate();
             partyName.setName(nameCommonBasic);
 
-            party.getPartyNames().add(partyName);
+            if(isOrder) party.getPartyNames().add(partyName);
             payeePartyType.getPartyNames().add(partyName);
         }
 
         ContactType contactType = new ContactType();
         boolean isContactAvailable = false;
-        if (!StringUtils.isEmpty(customerDTO.getContactId())) {
-            idCommonBasic = new IDCommonBasic();
-            idCommonBasic.setValue(customerDTO.getContactId());
-            contactType.setID(idCommonBasic);
-            isContactAvailable = true;
-        }
 
         if (!StringUtils.isEmpty(customerDTO.getTelePhone())) {
             TelephoneCommonBasic telephoneCommonBasic = new TelephoneCommonBasic();
             telephoneCommonBasic.setValue(customerDTO.getTelePhone());
             contactType.setTelephone(telephoneCommonBasic);
-            isContactAvailable = true;
-        }
-
-        if (!StringUtils.isEmpty(customerDTO.getTeleFax())) {
-            TelefaxCommonBasic telefaxCommonBasic = new TelefaxCommonBasic();
-            telefaxCommonBasic.setValue(customerDTO.getTeleFax());
-            contactType.setTelefax(telefaxCommonBasic);
             isContactAvailable = true;
         }
 
@@ -811,31 +807,13 @@ public class OrderUtils {
             isContactAvailable = true;
         }
 
-        if (isContactAvailable) {
+        if (isOrder && isContactAvailable) {
             party.setContact(contactType);
         }
 
-        if (addressDTO != null) {
+        if (isOrder && addressDTO != null) {
 
             boolean isAddressAvailable = false;
-
-            if (!StringUtils.isEmpty(addressDTO.getGln())) {
-
-                idCommonBasic = new IDCommonBasic();
-                idCommonBasic.setValue(addressDTO.getGln());
-                idCommonBasic.setSchemeID(EHFConstants.GLN.getValue());
-                idCommonBasic.setSchemeAgencyID(EHFConstants.SCHEME_AGENCY_ID.getValue());
-                postalAddress.setID(idCommonBasic);
-                isAddressAvailable = true;
-            }
-
-            if (!StringUtils.isEmpty(addressDTO.getBuildingNumber())) {
-                BuildingNumberCommonBasic buildingNumberCommonBasic =
-                        new BuildingNumberCommonBasic();
-                buildingNumberCommonBasic.setValue(addressDTO.getBuildingNumber());
-                postalAddress.setBuildingNumber(buildingNumberCommonBasic);
-                isAddressAvailable = true;
-            }
 
             if (!StringUtils.isEmpty(addressDTO.getStreetName())) {
                 StreetNameCommonBasic streetNameCommonBasic = new StreetNameCommonBasic();
@@ -848,13 +826,6 @@ public class OrderUtils {
                 PostalZoneCommonBasic postalZoneCommonBasic = new PostalZoneCommonBasic();
                 postalZoneCommonBasic.setValue(addressDTO.getPostalZone());
                 postalAddress.setPostalZone(postalZoneCommonBasic);
-                isAddressAvailable = true;
-            }
-
-            if (!StringUtils.isEmpty(addressDTO.getPostalBox())) {
-                PostboxCommonBasic postboxCommonBasic = new PostboxCommonBasic();
-                postboxCommonBasic.setValue(addressDTO.getPostalBox());
-                postalAddress.setPostbox(postboxCommonBasic);
                 isAddressAvailable = true;
             }
 
@@ -882,26 +853,24 @@ public class OrderUtils {
                 isRegistrationAddress = true;
             }
 
-            if (!StringUtils.isEmpty(addressDTO.getUrl())) {
-                WebsiteURICommonBasic websiteURICommonBasic = new WebsiteURICommonBasic();
-                websiteURICommonBasic.setValue(addressDTO.getUrl());
-                party.setWebsiteURI(websiteURICommonBasic);
-                isAddressAvailable = true;
-            }
-
             if (isAddressAvailable) {
                 party.setPostalAddress(postalAddress);
             }
         }
 
-        if (isRegistrationAddress) {
+        if (isOrder && isRegistrationAddress) {
             partyLegalEntityCommonAggregate.setRegistrationAddress(registrationAddress);
         }
+        
+        RegistrationNameCommonBasic registrationNameCommonBasic = new RegistrationNameCommonBasic();
+        registrationNameCommonBasic.setValue(customerDTO.getName());
+        partyLegalEntityCommonAggregate.setRegistrationName(registrationNameCommonBasic);
+        
         if (isPartyLegalEntity || isRegistrationAddress) {
             party.getPartyLegalEntities().add(partyLegalEntityCommonAggregate);
             payeePartyType.getPartyLegalEntities().add(partyLegalEntityCommonAggregate);
         }
-
+        
         customerPartyType.setParty(party);
         return customerPartyType;
     }
@@ -917,7 +886,7 @@ public class OrderUtils {
         CustomerDTO customerDTO = orderDTO.getCustomerDTO();
 
         if (customerDTO != null) {
-            CustomerPartyType customerPartyType = getBuyerCustomerParty(customerDTO);
+            CustomerPartyType customerPartyType = getBuyerCustomerParty(customerDTO,true);
             order.setBuyerCustomerParty(customerPartyType);
         }
     }
@@ -949,6 +918,7 @@ public class OrderUtils {
             EndpointIDCommonBasic endpointIDCB = party.getEndpointID();
             if (endpointIDCB != null) {
                 customerDTO.setEndpointId(endpointIDCB.getValue());
+                customerDTO.setEaID(endpointIDCB.getSchemeID());
             }
 
             IDCommonBasic idCommonBasic = null;
@@ -1063,7 +1033,7 @@ public class OrderUtils {
      * @param supplierDTO the supplier dto
      * @return the supplier party type
      */
-    private static SupplierPartyType getSupplierPartyType(SupplierDTO supplierDTO) {
+    private static SupplierPartyType getSupplierPartyType(SupplierDTO supplierDTO, boolean isOrder) {
 
         SupplierPartyType supplierPartyType = new SupplierPartyType();
         PartyType party = new PartyType();
@@ -1087,7 +1057,7 @@ public class OrderUtils {
 
         if (!StringUtils.isEmpty(supplierDTO.getEndpointId())) {
             endpointIDCB = new EndpointIDCommonBasic();
-            endpointIDCB.setSchemeID(country + ":" + EHFConstants.SCHEME_ID.getValue());
+            endpointIDCB.setSchemeID(supplierDTO.getEaID());
             endpointIDCB.setValue(supplierDTO.getEndpointId());
             party.setEndpointID(endpointIDCB);
         }
@@ -1103,7 +1073,7 @@ public class OrderUtils {
             party.getPartyIdentifications().add(partyIdentificationCommonAggregate);
         }
 
-        if (!StringUtils.isEmpty(supplierDTO.getName())) {
+        if (isOrder && !StringUtils.isEmpty(supplierDTO.getName())) {
 
             nameCommonBasic = new NameCommonBasic();
             nameCommonBasic.setValue(supplierDTO.getName());
@@ -1115,24 +1085,11 @@ public class OrderUtils {
 
         ContactType contactType = new ContactType();
         boolean isContactAvailable = false;
-        if (!StringUtils.isEmpty(supplierDTO.getContactId())) {
-            idCommonBasic = new IDCommonBasic();
-            idCommonBasic.setValue(supplierDTO.getContactId());
-            contactType.setID(idCommonBasic);
-            isContactAvailable = true;
-        }
 
         if (!StringUtils.isEmpty(supplierDTO.getTelePhone())) {
             TelephoneCommonBasic telephoneCommonBasic = new TelephoneCommonBasic();
             telephoneCommonBasic.setValue(supplierDTO.getTelePhone());
             contactType.setTelephone(telephoneCommonBasic);
-            isContactAvailable = true;
-        }
-
-        if (!StringUtils.isEmpty(supplierDTO.getTeleFax())) {
-            TelefaxCommonBasic telefaxCommonBasic = new TelefaxCommonBasic();
-            telefaxCommonBasic.setValue(supplierDTO.getTeleFax());
-            contactType.setTelefax(telefaxCommonBasic);
             isContactAvailable = true;
         }
 
@@ -1143,45 +1100,20 @@ public class OrderUtils {
             contactType.setElectronicMail(electronicMailCommonBasic);
             isContactAvailable = true;
         }
-        if (isContactAvailable) {
+        if (isOrder && isContactAvailable) {
             party.setContact(contactType);
         }
 
-        if (addressDTO != null) {
+        if (isOrder && addressDTO != null) {
 
             AddressType postalAddress = new AddressType();
             registrationAddress = new AddressType();
             boolean isAddressAvailable = false;
 
-            if (!StringUtils.isEmpty(addressDTO.getGln())) {
-
-                idCommonBasic = new IDCommonBasic();
-                idCommonBasic.setValue(addressDTO.getGln());
-                idCommonBasic.setSchemeID(EHFConstants.GLN.getValue());
-                idCommonBasic.setSchemeAgencyID(EHFConstants.SCHEME_AGENCY_ID.getValue());
-                postalAddress.setID(idCommonBasic);
-                isAddressAvailable = true;
-            }
-
-            if (!StringUtils.isEmpty(addressDTO.getBuildingNumber())) {
-                BuildingNumberCommonBasic buildingNumberCommonBasic =
-                        new BuildingNumberCommonBasic();
-                buildingNumberCommonBasic.setValue(addressDTO.getBuildingNumber());
-                postalAddress.setBuildingNumber(buildingNumberCommonBasic);
-                isAddressAvailable = true;
-            }
-
             if (!StringUtils.isEmpty(addressDTO.getStreetName())) {
                 StreetNameCommonBasic streetNameCommonBasic = new StreetNameCommonBasic();
                 streetNameCommonBasic.setValue(addressDTO.getStreetName());
                 postalAddress.setStreetName(streetNameCommonBasic);
-                isAddressAvailable = true;
-            }
-
-            if (!StringUtils.isEmpty(addressDTO.getPostalBox())) {
-                PostboxCommonBasic postboxCommonBasic = new PostboxCommonBasic();
-                postboxCommonBasic.setValue(addressDTO.getPostalBox());
-                postalAddress.setPostbox(postboxCommonBasic);
                 isAddressAvailable = true;
             }
 
@@ -1216,14 +1148,6 @@ public class OrderUtils {
                 isRegistrationAddress = true;
             }
 
-            if (!StringUtils.isEmpty(addressDTO.getCountrySubentityCode())) {
-                CountrySubentityCodeCommonBasic countrySubentityCodeCommonBasic = new CountrySubentityCodeCommonBasic();
-                countrySubentityCodeCommonBasic.setValue(addressDTO.getCountrySubentityCode());
-                postalAddress.setCountrySubentityCode(countrySubentityCodeCommonBasic);
-                registrationAddress.setCountrySubentityCode(countrySubentityCodeCommonBasic);
-                isAddressAvailable = true;
-            }
-
             if (isAddressAvailable) {
                 party.setPostalAddress(postalAddress);
             }
@@ -1231,20 +1155,25 @@ public class OrderUtils {
 
         CompanyIDCommonBasic companyIDCommonBasic = new CompanyIDCommonBasic();
 
-        if (!StringUtils.isEmpty(supplierDTO.getOrganizationNo())) {
+        if (isOrder && !StringUtils.isEmpty(supplierDTO.getOrganizationNo())) {
 
             companyIDCommonBasic = new CompanyIDCommonBasic();
             companyIDCommonBasic.setValue(ConversionUtils.stripNonAlphaNumeric(supplierDTO.getOrganizationNo()));
-            companyIDCommonBasic.setSchemeID(country + ":" + EHFConstants.SCHEME_ID.getValue());
-            companyIDCommonBasic.setSchemeName(EHFConstants.LEGAL_ENTITY_SCHEME_NAME.getValue());
+            companyIDCommonBasic.setSchemeID( EHFConstants.EHF_THREE_DOT_ZERO_ORDER_COMPANY_ID_SCHEME.getValue());
+            companyIDCommonBasic.setSchemeName(EHFConstants.EHF_THREE_DOT_ZERO_ORDER_LEGAL_ENTITY_SCHEME_NAME.getValue());
             companyIDCommonBasic.setSchemeAgencyID(EHFConstants.LEGAL_ENTITY_SCHEME_SGENCY_ID.getValue());
             partyLegalEntityCommonAggregate.setCompanyID(companyIDCommonBasic);
             isPartyLegalEntity = true;
         }
 
-        if (isRegistrationAddress) {
+        if (isOrder && isRegistrationAddress) {
             partyLegalEntityCommonAggregate.setRegistrationAddress(registrationAddress);
         }
+        
+        RegistrationNameCommonBasic registrationNameCommonBasic = new RegistrationNameCommonBasic();
+        registrationNameCommonBasic.setValue(supplierDTO.getName());
+        partyLegalEntityCommonAggregate.setRegistrationName(registrationNameCommonBasic);
+        
         if (isPartyLegalEntity || isRegistrationAddress) {
             party.getPartyLegalEntities().add(partyLegalEntityCommonAggregate);
         }
@@ -1264,7 +1193,7 @@ public class OrderUtils {
 
         if (supplierDTO != null) {
 
-            SupplierPartyType supplierPartyType = getSupplierPartyType(supplierDTO);
+            SupplierPartyType supplierPartyType = getSupplierPartyType(supplierDTO,true);
             order.setSellerSupplierParty(supplierPartyType);
         }
     }
@@ -1281,6 +1210,7 @@ public class OrderUtils {
             EndpointIDCommonBasic endpointIDCB = party.getEndpointID();
             if (endpointIDCB != null) {
                 supplierDTO.setEndpointId(endpointIDCB.getValue());
+                supplierDTO.setEaID(endpointIDCB.getSchemeID());
             }
 
             IDCommonBasic idCommonBasic = null;
@@ -1446,24 +1376,11 @@ public class OrderUtils {
 
             ContactType contactType = new ContactType();
             boolean isContactAvailable = false;
-            if (!StringUtils.isEmpty(customerDTO.getContactId())) {
-                idCommonBasic = new IDCommonBasic();
-                idCommonBasic.setValue(customerDTO.getContactId());
-                contactType.setID(idCommonBasic);
-                isContactAvailable = true;
-            }
 
             if (!StringUtils.isEmpty(customerDTO.getTelePhone())) {
                 TelephoneCommonBasic telephoneCommonBasic = new TelephoneCommonBasic();
                 telephoneCommonBasic.setValue(customerDTO.getTelePhone());
                 contactType.setTelephone(telephoneCommonBasic);
-                isContactAvailable = true;
-            }
-
-            if (!StringUtils.isEmpty(customerDTO.getTeleFax())) {
-                TelefaxCommonBasic telefaxCommonBasic = new TelefaxCommonBasic();
-                telefaxCommonBasic.setValue(customerDTO.getTeleFax());
-                contactType.setTelefax(telefaxCommonBasic);
                 isContactAvailable = true;
             }
 
@@ -1537,7 +1454,7 @@ public class OrderUtils {
             for (InvoiceLineItemDTO invoiceLineItemDTO : invoiceLineItemDTOs) {
 
                 if (invoiceLineItemDTO.getTotalExcTax() == null) {
-                    continue;
+                    throw new RuntimeException("TotalExcTax values must be specified");
                 }
 
                 orderLine = new OrderLineCommonAggregate();
@@ -1560,7 +1477,7 @@ public class OrderUtils {
                 idCommonBasic.setValue(invoiceLineItemDTO.getProductNo());
                 idCommonBasic.setSchemeID(EHFConstants.GTIN.getValue());
                 idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
-
+                
                 if (!StringUtils.isEmpty(invoiceLineItemDTO.getAccountingCode())) {
                     accountingCostCommonBasic = new AccountingCostCommonBasic();
                     accountingCostCommonBasic.setValue(invoiceLineItemDTO.getAccountingCode());
@@ -1570,38 +1487,66 @@ public class OrderUtils {
                 lineIDCommonBasic = new LineIDCommonBasic();
                 lineIDCommonBasic.setValue(String.valueOf(++i));
 
-                if (invoiceLineItemDTO.getTaxPercent() != null) {
+               // if (invoiceLineItemDTO.getTaxPercent() != null) {
 
-                    taxCategoryType = new TaxCategoryType();
+//                    taxCategoryType = new TaxCategoryType();
+//
+//                    idCommonBasic = new IDCommonBasic();
+//                    idCommonBasic.setValue(ConversionUtils.getTaxCategoryCode(invoiceLineItemDTO.getTaxPercent()));
+//                    idCommonBasic.setSchemeID(EHFConstants.TAX_CATEGORY_SCHEME_ID.getValue());
+//                    idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
+//                    taxCategoryType.setID(idCommonBasic);
+//
+//                    percentCommonBasic = new PercentCommonBasic();
+//                    percentCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceLineItemDTO.getTaxPercent()));
+//                    taxCategoryType.setPercent(percentCommonBasic);
 
-                    idCommonBasic = new IDCommonBasic();
-                    idCommonBasic.setValue(ConversionUtils.getTaxCategoryCode(invoiceLineItemDTO.getTaxPercent()));
-                    idCommonBasic.setSchemeID(EHFConstants.TAX_CATEGORY_SCHEME_ID.getValue());
-                    idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
-                    taxCategoryType.setID(idCommonBasic);
+//                    if (!StringUtils.isEmpty(invoiceLineItemDTO.getTaxTypeIntName())) {
+//
+//                        idCommonBasic = new IDCommonBasic();
+//                        idCommonBasic.setValue(invoiceLineItemDTO.getTaxTypeIntName());
+//                        idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
+//                        idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
+//                        taxSchemeCommonAggregate = new TaxSchemeCommonAggregate();
+//                        taxSchemeCommonAggregate.setID(idCommonBasic);
+//                    }
+//
+//                    taxCategoryType.setTaxScheme(taxSchemeCommonAggregate);               
 
-                    percentCommonBasic = new PercentCommonBasic();
-                    percentCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceLineItemDTO.getTaxPercent()));
-                    taxCategoryType.setPercent(percentCommonBasic);
-
-                    if (!StringUtils.isEmpty(invoiceLineItemDTO.getTaxTypeIntName())) {
-
+                    nameCommonBasic = new NameCommonBasic();
+                    nameCommonBasic.setValue(invoiceLineItemDTO.getProductName());
+                    itemType.setName(nameCommonBasic);
+                    
+                    if(invoiceLineItemDTO.getBuyersIdentification() != null) {
+                        
+                        itemIdentificationType = new ItemIdentificationType();
                         idCommonBasic = new IDCommonBasic();
-                        idCommonBasic.setValue(invoiceLineItemDTO.getTaxTypeIntName());
-                        idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
-                        idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
-                        taxSchemeCommonAggregate = new TaxSchemeCommonAggregate();
-                        taxSchemeCommonAggregate.setID(idCommonBasic);
+                        idCommonBasic.setValue(invoiceLineItemDTO.getBuyersIdentification());
+                        itemIdentificationType.setID(idCommonBasic);
+                        itemType.setBuyersItemIdentification(itemIdentificationType);
                     }
 
-                    taxCategoryType.setTaxScheme(taxSchemeCommonAggregate);
-                    nameCommonBasic = new NameCommonBasic();
-                    nameCommonBasic.setValue(invoiceLineItemDTO.getDescription());
-                    itemType.setName(nameCommonBasic);
-                    itemIdentificationType = new ItemIdentificationType();
-                    itemIdentificationType.setID(idCommonBasic);
-                    itemType.setSellersItemIdentification(itemIdentificationType);
-                }
+                    if(invoiceLineItemDTO.getStandardIdentification() != null) {
+                        
+                        itemIdentificationType = new ItemIdentificationType();
+                        idCommonBasic = new IDCommonBasic();
+                        idCommonBasic.setValue(invoiceLineItemDTO.getStandardIdentification());
+                        idCommonBasic.setSchemeID(EHFConstants.ORDER_EHFV3_GTIN.getValue());
+                        itemIdentificationType.setID(idCommonBasic);
+                        itemType.setStandardItemIdentification(itemIdentificationType);
+                    }
+
+                    if(invoiceLineItemDTO.getSellersIdentification() != null) {
+                        
+                        itemIdentificationType = new ItemIdentificationType();
+                        idCommonBasic = new IDCommonBasic();
+                        idCommonBasic.setValue(invoiceLineItemDTO.getSellersIdentification());
+                        itemIdentificationType.setID(idCommonBasic);
+                        itemType.setSellersItemIdentification(itemIdentificationType);
+                    }
+            //    } else {
+            //        throw new RuntimeException("TaxPercent can't be Null value");
+            //    }
 
                 if (invoiceLineItemDTO.getUnitPrice() != null) {
 
@@ -1617,6 +1562,8 @@ public class OrderUtils {
                     baseQuantityCommonBasic.setUnitCodeListID(EHFConstants.UNIT_CODE_LIST_ID.getValue());
                     price.setBaseQuantity(baseQuantityCommonBasic);
                     lineitem.setPrice(price);
+                } else {
+                    throw new RuntimeException("UnitPrice must be provided for item details");
                 }
 
                 if (invoiceLineItemDTO.getQuantity() != null) {
@@ -1632,19 +1579,6 @@ public class OrderUtils {
                     lineExtensionAmount.setValue(ConversionUtils.asBigDecimal(invoiceLineItemDTO.getTotalExcTax()));
                     lineExtensionAmount.setCurrencyID(currencyCode);
                     lineitem.setLineExtensionAmount(lineExtensionAmount);
-                }
-
-                if (invoiceLineItemDTO.getTaxAmount() != null) {
-                    totalTaxAmountCommonBasic = new TotalTaxAmountCommonBasic();
-                    totalTaxAmountCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceLineItemDTO.getTaxAmount()));
-                    totalTaxAmountCommonBasic.setCurrencyID(currencyCode);
-                    taxAmountCommonBasic = new TaxAmountCommonBasic();
-                    taxAmountCommonBasic.setCurrencyID(currencyCode);
-                    taxAmountCommonBasic.setValue(ConversionUtils.asBigDecimal(invoiceLineItemDTO.getTaxAmount()));
-                    taxTotalType = new TaxTotalType();
-                    taxTotalType.setTaxAmount(taxAmountCommonBasic);
-                    lineitem.setTotalTaxAmount(totalTaxAmountCommonBasic);
-                    order.getTaxTotals().add(taxTotalType);
                 }
 
                 allowanceCharges = invoiceLineItemDTO.getAllowanceCharges();
@@ -1671,34 +1605,6 @@ public class OrderUtils {
                             amountCommonBasic.setValue(ConversionUtils.asBigDecimal(allowanceChargeDTO.getAmount()));
                             amountCommonBasic.setCurrencyID(currencyCode);
                             allowanceChargeType.setAmount(amountCommonBasic);
-                        }
-
-                        if (allowanceChargeDTO.getTaxPercent() != null) {
-
-                            taxCategoryType = new TaxCategoryType();
-
-                            idCommonBasic = new IDCommonBasic();
-                            idCommonBasic.setValue(ConversionUtils.getTaxCategoryCode(allowanceChargeDTO.getTaxPercent()));
-                            idCommonBasic.setSchemeID(EHFConstants.TAX_CATEGORY_SCHEME_ID.getValue());
-                            idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
-                            taxCategoryType.setID(idCommonBasic);
-
-                            percentCommonBasic = new PercentCommonBasic();
-                            percentCommonBasic.setValue(ConversionUtils.asBigDecimal(allowanceChargeDTO.getTaxPercent()));
-                            taxCategoryType.setPercent(percentCommonBasic);
-
-                            if (!StringUtils.isEmpty(allowanceChargeDTO.getTaxType())) {
-
-                                idCommonBasic = new IDCommonBasic();
-                                idCommonBasic.setValue(allowanceChargeDTO.getTaxType());
-                                idCommonBasic.setSchemeID(EHFConstants.TAX_SCHEME_ID.getValue());
-                                idCommonBasic.setSchemeAgencyID(EHFConstants.TAX_SCHEME_AGENCY_ID.getValue());
-                                taxSchemeCommonAggregate = new TaxSchemeCommonAggregate();
-                                taxSchemeCommonAggregate.setID(idCommonBasic);
-                            }
-
-                            taxCategoryType.setTaxScheme(taxSchemeCommonAggregate);
-                            allowanceChargeType.getTaxCategories().add(taxCategoryType);
                         }
 
                         lineitem.getAllowanceCharges().add(allowanceChargeType);
@@ -1829,22 +1735,43 @@ public class OrderUtils {
                     invoiceLineItemDTO.setId(idCommonBasic.getValue());
                 }
 
-                noteCommonBasic = lineItem.getNotes().size() > 0 ? lineItem.getNotes().get(0) : null;
+                noteCommonBasic = orderLine.getNotes().size() > 0 ? orderLine.getNotes().get(0) : null;
                 if (noteCommonBasic != null && noteCommonBasic.getValue() != null) {
                     invoiceLineItemDTO.setNote(noteCommonBasic.getValue());
                 }
 
                 itemType = lineItem.getItem();
                 if (itemType != null) {
+                    
                     itemIdentificationType = itemType.getSellersItemIdentification();
                     if (itemIdentificationType != null) {
                         idCommonBasic = itemIdentificationType.getID();
                         if (idCommonBasic != null && idCommonBasic.getValue() != null) {
-                            invoiceLineItemDTO.setProductNo(idCommonBasic.getValue());
+                            invoiceLineItemDTO.setSellersIdentification(idCommonBasic.getValue());
                         }
                     }
+                    
+                    itemIdentificationType = itemType.getBuyersItemIdentification();
+                    if (itemIdentificationType != null) {
+                        idCommonBasic = itemIdentificationType.getID();
+                        if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                            invoiceLineItemDTO.setBuyersIdentification(idCommonBasic.getValue());
+                        }
+                    }
+                    
+                    itemIdentificationType = itemType.getStandardItemIdentification();
+                    if (itemIdentificationType != null) {
+                        idCommonBasic = itemIdentificationType.getID();
+                        if (idCommonBasic != null && idCommonBasic.getValue() != null) {
+                            invoiceLineItemDTO.setStandardIdentification(idCommonBasic.getValue());
+                            invoiceLineItemDTO.setStandardIdentificationScheme(idCommonBasic.getSchemeID());
+                        }
+                    }
+                    
+                    if(itemType.getName() != null) invoiceLineItemDTO.setProductName(itemType.getName().getValue());
+                    
                 }
-
+               
                 nameCommonBasic = itemType.getName();
                 if (nameCommonBasic != null) {
                     invoiceLineItemDTO.setProductName(nameCommonBasic.getValue());
@@ -1906,32 +1833,29 @@ public class OrderUtils {
                     invoiceLineItemDTO.setTotalExcTax(lineExtensionAmount.getValue().doubleValue());
                 }
 
-                taxTotals = lineItem.getTaxTotals();
-                if (taxTotals != null) {
-
-                    for (TaxTotalType taxTotalType : taxTotals) {
-                        taxAmountCommonBasic = taxTotalType.getTaxAmount();
-                        if (taxAmountCommonBasic != null && taxAmountCommonBasic.getValue() != null) {
-                            invoiceLineItemDTO.setTaxAmount(taxAmountCommonBasic.getValue().doubleValue());
-                        }
-                    }
-                }
-
+//                taxTotals = lineItem.getTaxTotals();
+//                if (taxTotals != null) {
+//
+//                    for (TaxTotalType taxTotalType : taxTotals) {
+//                        taxAmountCommonBasic = taxTotalType.getTaxAmount();
+//                        if (taxAmountCommonBasic != null && taxAmountCommonBasic.getValue() != null) {
+//                            invoiceLineItemDTO.setTaxAmount(taxAmountCommonBasic.getValue().doubleValue());
+//                        }
+//                    }
+//                }
+                
                 allowanceCharges = lineItem.getAllowanceCharges();
                 if (allowanceCharges != null && !allowanceCharges.isEmpty()) {
 
                     for (AllowanceChargeType allowanceChargeType : allowanceCharges) {
 
                         chargeIndicatorCommonBasic = allowanceChargeType.getChargeIndicator();
-						allowanceChargeReasonCommonBasic = allowanceChargeType
-								.getAllowanceChargeReasons().size() > 0 ? allowanceChargeType
-								.getAllowanceChargeReasons().get(0) : null;
                         amountCommonBasic = allowanceChargeType.getAmount();
                         if (amountCommonBasic != null && amountCommonBasic.getValue() != null) {
 
                             allowanceChargeDTO = new AllowanceChargeDTO();
                             allowanceChargeDTO.setChargeIndicator(chargeIndicatorCommonBasic.isValue());
-                            allowanceChargeDTO.setAllowanceChargeReason(allowanceChargeReasonCommonBasic.getValue());
+                            allowanceChargeDTO.setAllowanceChargeReason(allowanceChargeType.getAllowanceChargeReasonCode().getValue());
                             allowanceChargeDTO.setAmount(amountCommonBasic.getValue().doubleValue());
 
                             taxCategories = allowanceChargeType.getTaxCategories();
@@ -1986,20 +1910,15 @@ public class OrderUtils {
 
             orderResponse = new OrderResponse();
 
-            // Set UBL version ID
-            UBLVersionIDCommonBasic ublVersionIDCommonBasic = new UBLVersionIDCommonBasic();
-            ublVersionIDCommonBasic.setValue(EHFConstants.UBL_VERSION_ID_TWO_DOT_ONE.getValue());
-            orderResponse.setUBLVersionID(ublVersionIDCommonBasic);
-
             // Set customization id
             CustomizationIDCommonBasic customizationIDCommonBasic =
                     new CustomizationIDCommonBasic();
-            customizationIDCommonBasic.setValue(EHFConstants.ORDER_RESPONSE_CUSTOMIZATION_ID.getValue());
+            customizationIDCommonBasic.setValue(EHFConstants.EHF_THREE_DOT_ZERO_ORDER_RESPONSE_CUSTOMIZATION_ID.getValue());
             orderResponse.setCustomizationID(customizationIDCommonBasic);
 
             // Set profile id
             ProfileIDCommonBasic profileIDCommonBasic = new ProfileIDCommonBasic();
-            profileIDCommonBasic.setValue(EHFConstants.ORDER_PROFILE_ID.getValue());
+            profileIDCommonBasic.setValue(EHFConstants.EHF_THREE_DOT_ZERO_ORDER_RESPONSE_PROFILE_ID.getValue());
             orderResponse.setProfileID(profileIDCommonBasic);
 
             // Set invoice no
@@ -2023,7 +1942,7 @@ public class OrderUtils {
 
             OrderResponseCodeCommonBasic orderResponseCodeCommonBasic = new OrderResponseCodeCommonBasic();
             orderResponseCodeCommonBasic.setListID(EHFConstants.ORDER_RESPONSE_CODE.getValue());
-            orderResponseCodeCommonBasic.setValue(orderResponseDTO.getOrderResponseNo());
+            orderResponseCodeCommonBasic.setValue(orderResponseDTO.getOrderResponseCode());
 
             orderResponse.setOrderResponseCode(orderResponseCodeCommonBasic);
 
@@ -2035,9 +1954,14 @@ public class OrderUtils {
 
             OrderReferenceCommonAggregate orderReferenceCommonAggregate = new OrderReferenceCommonAggregate();
             idCommonBasic = new IDCommonBasic();
-            idCommonBasic.setValue(orderResponseDTO.getOrderResponseNo());
+            idCommonBasic.setValue(orderResponseDTO.getOrderReferenceId());
             orderReferenceCommonAggregate.setID(idCommonBasic);
             orderResponse.getOrderReferences().add(orderReferenceCommonAggregate);
+            
+            DocumentCurrencyCodeCommonBasic documentCurrencyCodeCommonBasic = new DocumentCurrencyCodeCommonBasic();
+            documentCurrencyCodeCommonBasic.setName(orderResponseDTO.getCurrencyDTO().getCurrencyName());
+            documentCurrencyCodeCommonBasic.setValue(orderResponseDTO.getCurrencyDTO().getCurrencyCode());
+            orderResponse.setDocumentCurrencyCode(documentCurrencyCodeCommonBasic);
 
             mapOrderResponseSupplier(orderResponseDTO, orderResponse);
             mapOrderResponseCustomer(orderResponseDTO, orderResponse);
@@ -2053,7 +1977,7 @@ public class OrderUtils {
 
         if (supplierDTO != null) {
 
-            SupplierPartyType supplierPartyType = getSupplierPartyType(supplierDTO);
+            SupplierPartyType supplierPartyType = getSupplierPartyType(supplierDTO,false);
             orderResponse.setSellerSupplierParty(supplierPartyType);
         }
     }
@@ -2063,7 +1987,7 @@ public class OrderUtils {
         CustomerDTO customerDTO = orderResponseDTO.getCustomerDTO();
 
         if (customerDTO != null) {
-            CustomerPartyType customerPartyType = getBuyerCustomerParty(customerDTO);
+            CustomerPartyType customerPartyType = getBuyerCustomerParty(customerDTO,false);
             orderResponse.setBuyerCustomerParty(customerPartyType);
         }
     }
@@ -2094,6 +2018,7 @@ public class OrderUtils {
                 EndpointIDCommonBasic endpointIDCB = party.getEndpointID();
                 if (endpointIDCB != null) {
                     customerDTO.setEndpointId(endpointIDCB.getValue());
+                    customerDTO.setEaID(endpointIDCB.getSchemeID());
                 }
 
                 IDCommonBasic idCommonBasic = null;
@@ -2118,6 +2043,7 @@ public class OrderUtils {
                     if (companyIDCommonBasic != null) {
                         customerDTO.setOrganizationNo(companyIDCommonBasic.getValue());
                     }
+                    if(partyLegalEntityCommonAggregate.getRegistrationName() != null) customerDTO.setName(partyLegalEntityCommonAggregate.getRegistrationName().getValue());
                 }
 
                 AddressType postalAddress = party.getPostalAddress();
@@ -2276,6 +2202,7 @@ public class OrderUtils {
                 if (invoiceLineItemDTO.getQuantity() != null) {
                     quantityCommonBasic = new QuantityCommonBasic();
                     quantityCommonBasic.setValue(BigDecimal.valueOf(invoiceLineItemDTO.getQuantity()));
+                    quantityCommonBasic.setUnitCode(invoiceLineItemDTO.getUnitCode());
                     lineitem.setQuantity(quantityCommonBasic);
                 }
 
@@ -2307,9 +2234,9 @@ public class OrderUtils {
                     lineitem.setPrice(price);
                 }
 
-                if (!StringUtils.isEmpty(invoiceLineItemDTO.getDescription())) {
+                if (!StringUtils.isEmpty(invoiceLineItemDTO.getProductName())) {
                     nameCommonBasic = new NameCommonBasic();
-                    nameCommonBasic.setValue(invoiceLineItemDTO.getDescription());
+                    nameCommonBasic.setValue(invoiceLineItemDTO.getProductName());
                     itemType.setName(nameCommonBasic);
                 }
 
@@ -2324,6 +2251,7 @@ public class OrderUtils {
                 if (!StringUtils.isEmpty(invoiceLineItemDTO.getStandardIdentification())) {
                     idCommonBasic = new IDCommonBasic();
                     idCommonBasic.setValue(invoiceLineItemDTO.getStandardIdentification());
+                    idCommonBasic.setSchemeID(EHFConstants.ORDER_EHFV3_GTIN.getValue());
                     itemIdentificationType = new ItemIdentificationType();
                     itemIdentificationType.setID(idCommonBasic);
                     itemType.setStandardItemIdentification(itemIdentificationType);
@@ -2349,7 +2277,7 @@ public class OrderUtils {
                     if (!StringUtils.isEmpty(substitutedLineItemDTO.getSellersItemId())) {
                         itemIdentificationType = new ItemIdentificationType();
                         idCommonBasic = new IDCommonBasic();
-                        idCommonBasic.setSchemeID(EHFConstants.GTIN.getValue());
+                        idCommonBasic.setSchemeID(EHFConstants.ORDER_EHFV3_GTIN.getValue());
                         idCommonBasic.setValue(substitutedLineItemDTO.getSellersItemId());
                         itemIdentificationType.setID(idCommonBasic);
                         substitutedItemType.setSellersItemIdentification(itemIdentificationType);
@@ -2358,6 +2286,7 @@ public class OrderUtils {
                     if (!StringUtils.isEmpty(substitutedLineItemDTO.getStandardItemId())) {
                         itemIdentificationType = new ItemIdentificationType();
                         idCommonBasic = new IDCommonBasic();
+                        idCommonBasic.setSchemeID(EHFConstants.ORDER_EHFV3_GTIN.getValue());
                         idCommonBasic.setValue(substitutedLineItemDTO.getStandardItemId());
                         itemIdentificationType.setID(idCommonBasic);
                         substitutedItemType.setStandardItemIdentification(itemIdentificationType);
@@ -2463,7 +2392,7 @@ public class OrderUtils {
                 }
 
                 //set note
-                noteCommonBasic = lineItem.getNotes().size() > 0 ? orderLine.getNotes().get(0) : null;
+                noteCommonBasic = lineItem.getNotes().size() > 0 ? lineItem.getNotes().get(0) : null;
                 if (noteCommonBasic != null && noteCommonBasic.getValue() != null) {
                     invoiceLineItemDTO.setNote(noteCommonBasic.getValue());
                 }
@@ -2473,10 +2402,23 @@ public class OrderUtils {
                 if (lineStatusCodeCommonBasic != null) {
                     invoiceLineItemDTO.setLineStatusCode(lineStatusCodeCommonBasic.getValue());
                 }
+                
+                List<DeliveryType>  deliveryTypes = lineItem.getDeliveries();
+                if(deliveryTypes != null && deliveryTypes.size() > 0) {
+                    
+                    DeliveryDTO deliveryDTO = new DeliveryDTO();
+                    if(deliveryTypes.get(0).getPromisedDeliveryPeriod() != null && deliveryTypes.get(0).getPromisedDeliveryPeriod().getStartDate() != null) {
+                        deliveryDTO.setDeliveryDate(ConversionUtils.asDate(deliveryTypes.get(0).getPromisedDeliveryPeriod().getStartDate().getValue()));
+                    }
+                    
+                    invoiceLineItemDTO.setDeliveryDTO(deliveryDTO);
+                }
 
                 itemType = lineItem.getItem();
 
                 if (itemType != null) {
+                    
+                    if(itemType.getName() != null) invoiceLineItemDTO.setProductName(itemType.getName().getValue());
 
                     //set unit code
                     baseQuantityCommonBasic = lineItem.getPrice().getBaseQuantity();
@@ -2499,7 +2441,7 @@ public class OrderUtils {
                     if (price != null) {
                         priceAmountCommonBasic = price.getPriceAmount();
                         if (priceAmountCommonBasic != null && priceAmountCommonBasic.getValue() != null) {
-                            invoiceLineItemDTO.setUnitPrice(priceAmountCommonBasic.getValue().doubleValue());
+                            invoiceLineItemDTO.setUnitPrice(priceAmountCommonBasic.getValue().doubleValue());                            
                         }
                     }
 
@@ -2556,6 +2498,8 @@ public class OrderUtils {
                 substitutedLineItemDTO.setItemName(substitutedItemType.getName().getValue());
                 substitutedLineItemDTO.setId(lineItem.getID().getValue());
 
+                invoiceLineItemDTO.setSubstitutedLineItem(substitutedLineItemDTO);
+                
                 List<OrderLineReferenceCommonAggregate> orderLineReferences = orderLine.getOrderLineReferences();
                 if (orderLineReferences.size() > 0) {
                     OrderLineReferenceCommonAggregate orderLineReference = orderLineReferences.get(0);

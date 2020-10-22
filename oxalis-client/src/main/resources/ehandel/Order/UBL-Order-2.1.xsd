@@ -43,11 +43,11 @@
          </xsd:documentation>
       </xsd:annotation>
       <xsd:sequence>
-           <xsd:element ref="ext:UBLExtensions" minOccurs="0" maxOccurs="1">
-              <xsd:annotation>
-                 <xsd:documentation>A container for all extensions present in the document.</xsd:documentation>
-              </xsd:annotation>
-           </xsd:element>
+         <xsd:element ref="ext:UBLExtensions" minOccurs="0" maxOccurs="1">
+            <xsd:annotation>
+               <xsd:documentation>A container for all extensions present in the document.</xsd:documentation>
+            </xsd:annotation>
+         </xsd:element>
           <xsd:element ref="cbc:UBLVersionID" minOccurs="0" maxOccurs="1">
             <xsd:annotation>
                <xsd:documentation>

@@ -21,4 +21,22 @@
            </cron>
        </trigger>
     </schedule>
+    <schedule>
+        <job>
+           <name>resendPaymentJob</name>
+           <group>job-group</group>
+           <description>This job will trigger resend service for every minute</description>
+           <job-class>no.difi.oxalis.service.scheduler.ResendPaymentJob</job-class>
+        </job>
+       <trigger>
+           <cron>
+              <name>resendPaymentTrigger</name>
+              <group>trigger-group</group>
+              <job-name>resendPaymentJob</job-name>
+              <job-group>job-group</job-group>
+              <!-- trigger every hour -->
+	      <cron-expression>0 0/5 * * * ? *</cron-expression>
+           </cron>
+       </trigger>
+    </schedule>
 </job-scheduling-data>

@@ -22,6 +22,7 @@ import java.util.Set;
 import javax.xml.datatype.DatatypeFactory;
 import no.difi.oxalis.service.util.ObjectStorage;
 import no.difi.oxalis.service.model.MessageInfo;
+import eu.peppol.outbound.api.ReceiptDTO;
 import no.difi.oxalis.service.util.IdentifierName;
 import org.apache.commons.io.IOUtils;
 
@@ -107,6 +108,81 @@ public class OutboundBO extends AbstractBO {
             }
 
             return messageInfo;
+
+        } catch (Throwable e) {
+            throw new BOException(e);
+        } finally {
+            release(rs);
+            release(ps);
+            cleanup();
+        }
+    }
+    
+    public List<ReceiptDTO> getReceipts(String messageReference, boolean recentOnly) {
+
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<ReceiptDTO> receiptInfos = new ArrayList<>();
+
+        try {
+
+            String sql = "SELECT EPEPPOL_MESSAGE_RECEIPT_ID,\n" +
+                            "       MESSAGE_REFERENCE,\n" +
+                            "       SENDER_PARTICIPANT_ID,\n" +
+                            "       RECEIVER_PARTICIPANT_ID,\n" +
+                            "       RECEIPT,\n" +
+                            "       DESCRIPTION,\n" +
+                            "       STATE,\n" +
+                            "       CREATED_DATE,\n" +
+                            "       MODIFIED_DATE\n" +
+                            "FROM EPEPPOL_MESSAGE_RECEIPTS\n";
+                    
+                    if (messageReference != null) {
+                       sql += "WHERE MESSAGE_REFERENCE = ? \n";
+                    } else {
+                       sql += "WHERE READ_FLAG <> 1 \n"; 
+                    }
+                            sql += "ORDER BY CREATED_DATE\n";
+            
+            if(recentOnly) {
+                sql += "LIMIT 1";
+            }
+
+            ps = con.prepareStatement(sql);
+            
+            if(messageReference != null) {
+                ps.setString(1, messageReference);
+            }
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                ReceiptDTO receiptInfo = new ReceiptDTO();
+                receiptInfo.setId(rs.getLong(1));
+                receiptInfo.setMessageReference(rs.getString(2));
+                receiptInfo.setSenderId(rs.getString(3));
+                receiptInfo.setReceiverId(rs.getString(4));
+                
+                Blob blob = rs.getBlob(5);
+                if (blob != null) {
+                    int blobLength = (int) blob.length();
+                    receiptInfo.setReceipt(blob.getBytes(1, blobLength));
+                    blob.free();
+                } else {
+                    receiptInfo.setReceipt(ObjectStorage.getFile(String.valueOf(receiptInfo.getId())));
+                }
+                
+                receiptInfo.setDescription(rs.getString(6));
+                receiptInfo.setState(rs.getString(7));
+                
+                receiptInfo.setCreatedDate(rs.getDate(8));
+                receiptInfo.setModifiedDate(rs.getDate(9));
+                
+                receiptInfos.add(receiptInfo);
+            }
+
+            return receiptInfos;
 
         } catch (Throwable e) {
             throw new BOException(e);
@@ -225,6 +301,74 @@ public class OutboundBO extends AbstractBO {
         }
     }
     
+    public List<String> getAllUnReadMessageIdOfOrder(String participentId) {
+
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<String> messageIdList = new ArrayList<String>();
+
+        try {
+
+            String sql = "SELECT MESSAGE_IDENTIFIER AS MessageIdentifier FROM PEPPOL_MESSAGE_META_DATA "
+                    + " WHERE IS_DELETED = 0 AND MESSAGE_READ_FLAG = 0 " 
+                    + " AND ( RECIPIENT_IDENTIFIER = ? OR ? IS NULL )"
+                    + " AND ( UPPER(DOCUMENT_TYPE_IDENTIFIER) LIKE '%ORDER%' AND UPPER(DOCUMENT_TYPE_IDENTIFIER) NOT LIKE '%ORDERRESPONSE%' ) ";
+
+            ps = con.prepareStatement(sql);
+            
+            ps.setString(1, participentId);
+            ps.setString(2, participentId);
+
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                messageIdList.add(rs.getString(IdentifierName.MESSAGE_ID.stringValue()));
+            }
+
+            return messageIdList;
+        } catch(Exception e) {
+            throw new BOException(e);
+        } finally {
+            release(rs);
+            release(ps);
+            cleanup();
+        }
+    }
+    
+    public List<String> getAllUnReadMessageIdOfOrderResponse(String participentId) {
+
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<String> messageIdList = new ArrayList<String>();
+
+        try {
+
+            String sql = "SELECT MESSAGE_IDENTIFIER AS MessageIdentifier FROM PEPPOL_MESSAGE_META_DATA "
+                    + " WHERE IS_DELETED = 0 AND MESSAGE_READ_FLAG = 0 " 
+                    + " AND ( RECIPIENT_IDENTIFIER = ? OR ? IS NULL )"
+                    + " AND UPPER(DOCUMENT_TYPE_IDENTIFIER) LIKE '%ORDERRESPONSE%' ";
+
+            ps = con.prepareStatement(sql);
+
+            ps.setString(1, participentId);
+            ps.setString(2, participentId);
+            
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                messageIdList.add(rs.getString(IdentifierName.MESSAGE_ID.stringValue()));
+            }
+
+            return messageIdList;
+        } catch(Exception e) {
+            throw new BOException(e);
+        } finally {
+            release(rs);
+            release(ps);
+            cleanup();
+        }
+    }
+    
     public boolean markAsRead(List<String> messageIds) {
 
         PreparedStatement ps = null;
@@ -280,7 +424,35 @@ public class OutboundBO extends AbstractBO {
             cleanup();
         }
     }
+    
+    public boolean markReceiptAsRead(List<String> messageIds) {
 
+        PreparedStatement ps = null;
+
+        try {
+
+            String sql = "UPDATE EPEPPOL_MESSAGE_RECEIPTS SET READ_FLAG = 1 WHERE EPEPPOL_MESSAGE_RECEIPT_ID IN (?";
+            for (int i = 1; i < messageIds.size(); i++) {
+                sql = sql + ", ?";
+            }
+            sql = sql + ")";
+            ps = con.prepareStatement(sql);
+
+            for (int i = 0; i < messageIds.size(); i++) {
+                ps.setString((i+1), messageIds.get(i));
+            }
+
+            ps.executeUpdate();
+            return true;
+
+        } catch (Throwable e) {
+            throw new BOException(e);
+        } finally {
+            release(ps);
+            cleanup();
+        }
+    }
+    
     /**
      * Creates the user.
      * 

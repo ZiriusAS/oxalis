@@ -29,9 +29,13 @@ public enum Property {
     
     OUTBOUND_MESSAGE_STORE_PATH("oxalis.outbound.message.store"), 
     
+    OUTBOUND_PAYMENT_MESSAGE_STORE_PATH("oxalis.outbound.payment.message.store"), 
+    
     FOLLOWUP_MESSAGE_STORE_PATH("oxalis.followup.message.store"),
     
     EVIDENCE_PATH("evidence.path"),
+    
+    EPEPPOL_RECEIPT_PATH("epeppol.receipt.path"),
     
     VALIDATOR_URL("validator.url");
     
