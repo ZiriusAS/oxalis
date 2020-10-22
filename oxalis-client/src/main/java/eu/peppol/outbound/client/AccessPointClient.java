@@ -138,7 +138,7 @@ public final class AccessPointClient {
                 new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, REALM_NAME),
                 new UsernamePasswordCredentials(userName, password));
         
-        int timeout = 60 * 30; // minutes
+        int timeout = 60 * 60 * 5; // minutes
         
         HttpParams httpParams = httpClient.getParams();
         httpParams.setParameter(
