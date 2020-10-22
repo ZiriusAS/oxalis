@@ -68,14 +68,26 @@ public class C2ReceiptGenerator {
         
         StandardBusinessDocumentHeader sdbh = extractSDBH(sdbByte);
         
-        C2ZiriusReceptionAcknowledgementType ack = generateAcknowledgement(sdbh);
+        generateAcknowledgementFromSDB(sdbh);
+
+    }
+    
+    /**
+     * Generates acknowledgement receipt (C2) from standard business document. 
+     * 
+     * @param sbdh
+     * @throws JAXBException 
+     */
+    public void  generateAcknowledgementFromSDB(StandardBusinessDocumentHeader sbdh) throws JAXBException, IOException {
+        
+        C2ZiriusReceptionAcknowledgementType ack = generateAcknowledgement(sbdh);
         
         QName name = new QName("urn:fdc:difi.no:2017:payment:extras-1","C2ZiriusReceptionAcknowledgement");
             
         JAXBElement<C2ZiriusReceptionAcknowledgementType> element 
                 = new JAXBElement<C2ZiriusReceptionAcknowledgementType>(name,C2ZiriusReceptionAcknowledgementType.class, ack);
         
-        generateReceiptXML(element, getInstanceIdentifier(sdbh), "acknowledgement");
+        generateReceiptXML(element, getInstanceIdentifier(sbdh), "acknowledgement");
 
     }
     
@@ -89,7 +101,20 @@ public class C2ReceiptGenerator {
         
         StandardBusinessDocumentHeader sdbh = extractSDBH(sdbByte);
         
-        C2ZiriusHandlingExceptionType exception = generateExceptionAcknowledgement(sdbh, 
+        generateExceptionFromSDB(sdbh,ex);
+
+    }
+    
+    /**
+     * Generates exception receipt (C2) from standard business document. 
+     * 
+     * @param sbdh
+     * @throws JAXBException 
+     */
+    public void  generateExceptionFromSDB(StandardBusinessDocumentHeader sbdh, Exception ex) throws JAXBException, IOException {
+        
+        
+        C2ZiriusHandlingExceptionType exception = generateExceptionAcknowledgement(sbdh, 
                 ex.getClass().toString(), ex.getMessage());
         
         QName name = new QName("urn:fdc:difi.no:2017:payment:extras-1", "C2ZiriusHandlingException");
@@ -97,7 +122,7 @@ public class C2ReceiptGenerator {
         JAXBElement<C2ZiriusHandlingExceptionType> element 
                 = new JAXBElement<C2ZiriusHandlingExceptionType>(name,C2ZiriusHandlingExceptionType.class, exception);
         
-        generateReceiptXML(element, getInstanceIdentifier(sdbh), "exception");
+        generateReceiptXML(element, getInstanceIdentifier(sbdh), "exception");
 
     }
     
@@ -108,7 +133,7 @@ public class C2ReceiptGenerator {
      * @return
      * @throws JAXBException 
      */
-    private StandardBusinessDocumentHeader extractSDBH(byte[] sdb) throws JAXBException {
+    public StandardBusinessDocumentHeader extractSDBH(byte[] sdb) throws JAXBException {
         
         Source source = new StreamSource(new ByteArrayInputStream(sdb));
 
@@ -121,7 +146,7 @@ public class C2ReceiptGenerator {
     /**
      * get the instance identifier
      */
-    private String getInstanceIdentifier(StandardBusinessDocumentHeader sdbh) {
+    public String getInstanceIdentifier(StandardBusinessDocumentHeader sdbh) {
         
         return sdbh.getDocumentIdentification().getInstanceIdentifier();
     }

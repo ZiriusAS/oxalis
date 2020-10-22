@@ -126,11 +126,13 @@ public class CustomMain {
     
     public TransmissionResponse send(String filepath) throws Exception {
 
+        log.info("### Send operation begins ###");
     	Span span = null;
         try {
 
+            log.info("### Transmission parameter initialized ###");
             TransmissionParameters params = new TransmissionParameters(getOutBoundComponent());
-
+            
             if (this.isTestEnvironment) {
                 
                 try (InputStream inputStream = new FileInputStream(this.oxalisCertificatePath)) {
@@ -142,46 +144,62 @@ public class CustomMain {
 
             File xmlPayloadFile = new File(filepath);
 
+            log.info("### Transmission task initiated ###");
             TransmissionTask transmissionTask = new TransmissionTask(params, xmlPayloadFile);
 
+            log.info("### Span stated ###");
             span = tracer.buildSpan("standalone").start();
 
+            log.info("### Transmission request created ###");
             TransmissionRequest transmissionRequest = transmissionTask.createTransmissionRequest(span);
+            
+            log.info("### Transmission started ###");
             Transmitter transmitter = getOutBoundComponent().getTransmitter();
 
             TransmissionResponse response = transmitter.transmit(transmissionRequest, span);
+            log.info("### Transmission ended ###");
 
             return response;
 
         } catch (Exception e) {
             e.printStackTrace();
+            log.error("### Send operation failed ###",e);
             throw e;
         }  finally {
         	span.finish();
+                log.info("### Span finished & send operation completed ###");
         }
     }
     
     public TransmissionResponse sendDocumentUsingFactory(InputStream inputStream) throws Exception {
 
+        log.info("### Send operation begins ###");
         Span span = null;
         if (inputStream != null) {
 
             try {
                 
+                log.info("### Span stated ###");
                 span = tracer.buildSpan("standalone").start();
+                
+                log.info("### Transmission parameter initialized ###");
             	TransmissionParameters params = new TransmissionParameters(getOutBoundComponent());
             		
+                log.info("### Transmission started ###");
             	TransmissionResponse transmissionResponse = params.getOxalisOutboundComponent()
         				.getTransmissionService()
         				.send(inputStream, params.getTag(), span);
-        		
+        	log.info("### Transmission ended ###");
+                
                 return transmissionResponse;
             	
             } catch (Exception e) {
                 e.printStackTrace();
+                log.error("### Send operation failed ###",e);
                 throw e;
             } finally {
                 span.finish();
+                log.info("### Span finished & send operation completed ###");
             }
         }         
         throw new IOException("Input Stream cloased or not available");
