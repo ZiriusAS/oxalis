@@ -214,13 +214,14 @@ public class OutboundService extends BaseService{
                 }
 
             });
+            LOGGER.info("### Send completed ###");
         } else {
             
             LOGGER.info("### Called Sync");
-            send(documentDTO, document, userId, isResendDocument, enhanced, sbdh);
+            String trasmissionIdentifier = send(documentDTO, document, userId, isResendDocument, enhanced, sbdh);
+            LOGGER.info(String.format("### Send completed [ trasmission identifier : %s ] ###", trasmissionIdentifier));
         }
 
-        LOGGER.info("### Send completed ###");
         return c2ReceiptGenerator.getInstanceIdentifier(sbdh);
     }
      
