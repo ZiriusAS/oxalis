@@ -58,7 +58,28 @@ public class RestController extends BaseController {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
             String userId = sc.getUserPrincipal().getName();
             documentDTO.setEHFDocument(true);
-            String result = service.sendDocument(documentDTO, userId, false);
+            String result = service.send(documentDTO, userId, false, true, true);
+            
+            byte[] reponse = respond(result);
+            return Response.ok(reponse).build();
+        } catch (Exception e) {
+            Log.error("Unable to send file: " + e.getMessage());
+            return writeErrorResponse(e);
+        }
+        
+    }
+    
+    @POST
+    @Path("/sendReceipts")
+    @Consumes(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response sendReceipts(@Context SecurityContext sc, byte[] data) {
+
+        try {
+            DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
+            String userId = sc.getUserPrincipal().getName();
+            documentDTO.setEHFDocument(true);
+            String result = service.send(documentDTO, userId, false, false, true);
             
             byte[] reponse = respond(result);
             return Response.ok(reponse).build();
@@ -79,7 +100,7 @@ public class RestController extends BaseController {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
             documentDTO.setEHFDocument(true);
             String userId = sc.getUserPrincipal().getName();
-            String result = service.sendDocument(documentDTO, userId, false);
+            String result = service.send(documentDTO, userId, false, true, true);
             
             byte[] reponse = respond(result);
             return Response.ok(reponse).build();
@@ -100,7 +121,7 @@ public class RestController extends BaseController {
             DocumentDTO documentDTO = (DocumentDTO) getObjectFromStream(data);
             documentDTO.setEHFDocument(true);
             String userId = sc.getUserPrincipal().getName();
-            String result = service.sendDocument(documentDTO, userId, false);
+            String result = service.send(documentDTO, userId, false, true, true);
             
             byte[] reponse = respond(result);
             return Response.ok(reponse).build();
