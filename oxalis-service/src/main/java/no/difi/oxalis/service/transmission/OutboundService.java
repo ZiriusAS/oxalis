@@ -213,6 +213,11 @@ public class OutboundService extends BaseService{
             LOGGER.info("### Called Sync");
             String trasmissionIdentifier = send(documentDTO, document, userId, isResendDocument, enhanced, sbdh);
             LOGGER.info(String.format("### Send completed [ trasmission identifier : %s ] ###", trasmissionIdentifier));
+            
+            if(trasmissionIdentifier == null) { 
+                return trasmissionIdentifier;
+            }
+            
         }
 
         return c2ReceiptGenerator.getInstanceIdentifier(sbdh);
@@ -950,7 +955,7 @@ public class OutboundService extends BaseService{
                     if (enhanced != null && enhanced.equals("true.xml")) {
                         messageReference = send(documentDTO, DS_NAME, true, true, false);
                     } else {
-                        messageReference = send(documentDTO, DS_NAME, true, false, true);
+                        messageReference = send(documentDTO, DS_NAME, true, false, false);
                     }
                     
                     if (messageReference != null) {                        
