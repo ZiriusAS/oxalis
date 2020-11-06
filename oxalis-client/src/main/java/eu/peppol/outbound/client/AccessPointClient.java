@@ -82,9 +82,9 @@ public final class AccessPointClient {
     private static final String METHOD_GET_ACCESSPOINT_DETAILS = "getAccesspointDetails";
     private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_INVOICE = "getEHFV3InvoiceEndPoint";
     private static final String METHOD_GET_IF_PARTICIPANT_ENABLED_EHFV3_CREDITNOTE = "getEHFV3CreditNoteEndPoint";
-    private static final String METHOD_SEND_EPEPPOL = "sendEPEPPOL";
-    private static final String METHOD_GET_EPEPPOL_RECEIPTS = "getEPEPPOLReceipts";    
-    private static final String METHOD_GET_EPEPPOL_LAST_RECEIPTS = "getLastEPEPPOLReceipts"; 
+    private static final String METHOD_SEND_RECEIPTS = "sendReceipts";
+    private static final String METHOD_GET_RECEIPTS = "getReceipts";    
+    private static final String METHOD_GET_LAST_RECEIPTS = "getLastReceipts"; 
     private static final String METHOD_GET_ALL_NEW_RECEIPTS = "getAllNewReceipts"; 
     private static final String METHOD_MARK_RECEIPTS = "markReceiptAsRead"; 
     private static final String METHOD_SEND_EHFV3_ORDER = "sendEHFV3Order";
@@ -1088,7 +1088,7 @@ public final class AccessPointClient {
     }
     
     /**
-     * Sending the document in Enhanced PEPPOL standards.
+     * For sending Enhanced PEPPOL receipt documents.
      *
      * @param documentDTO the document dto
      * @param userName the user name
@@ -1096,11 +1096,11 @@ public final class AccessPointClient {
      * @return message reference
      * @throws Exception the exception
      */
-    public static String sendEPEPPOL(DocumentDTO documentDTO, String userName, String password)
+    public static String sendReceipts(DocumentDTO documentDTO, String userName, String password)
             throws Exception {
 
         HttpClient httpClient = getHttpClient(userName, password);
-        PostMethod httpPost = getHttpPostMethod(METHOD_SEND_EPEPPOL);
+        PostMethod httpPost = getHttpPostMethod(METHOD_SEND_RECEIPTS);
 
         try {
 
@@ -1119,8 +1119,8 @@ public final class AccessPointClient {
         }
     }
     
-    public static String sendEPEPPOL(DocumentDTO documentDTO) throws Exception {
-        return sendEPEPPOL(documentDTO, USERNAME, PASSWORD);
+    public static String sendReceipts(DocumentDTO documentDTO) throws Exception {
+        return sendReceipts(documentDTO, USERNAME, PASSWORD);
     }
     
     /**
@@ -1132,10 +1132,10 @@ public final class AccessPointClient {
      * @return
      * @throws Exception
      */
-    public static List<ReceiptDTO> getEPEPPOLReceipt(String messageReference, String userName, String password) throws Exception {
+    public static List<ReceiptDTO> getReceipt(String messageReference, String userName, String password) throws Exception {
 
         HttpClient httpClient = getHttpClient(userName, password);
-        GetMethod httpGet = getHttpGetMethod(METHOD_GET_EPEPPOL_RECEIPTS + "/" + messageReference);
+        GetMethod httpGet = getHttpGetMethod(METHOD_GET_RECEIPTS + "/" + messageReference);
 
         try {
 
@@ -1150,8 +1150,8 @@ public final class AccessPointClient {
         }
     }
     
-    public static List<ReceiptDTO> getEPEPPOLReceipt(String messageReference) throws Exception {
-        return getEPEPPOLReceipt(messageReference, USERNAME, PASSWORD);
+    public static List<ReceiptDTO> getReceipt(String messageReference) throws Exception {
+        return getReceipt(messageReference, USERNAME, PASSWORD);
     }
     
     
@@ -1164,10 +1164,10 @@ public final class AccessPointClient {
      * @return
      * @throws Exception
      */
-    public static ReceiptDTO getLastEPEPPOLReceipt(String messageReference, String userName, String password) throws Exception {
+    public static ReceiptDTO getLastReceipt(String messageReference, String userName, String password) throws Exception {
 
         HttpClient httpClient = getHttpClient(userName, password);
-        GetMethod httpGet = getHttpGetMethod(METHOD_GET_EPEPPOL_LAST_RECEIPTS + "/" + messageReference);
+        GetMethod httpGet = getHttpGetMethod(METHOD_GET_LAST_RECEIPTS + "/" + messageReference);
 
         try {
 
@@ -1182,8 +1182,8 @@ public final class AccessPointClient {
         }
     }    
     
-    public static ReceiptDTO getLastEPEPPOLReceipt(String messageReference) throws Exception {
-        return getLastEPEPPOLReceipt(messageReference, USERNAME, PASSWORD);
+    public static ReceiptDTO getLastReceipt(String messageReference) throws Exception {
+        return getLastReceipt(messageReference, USERNAME, PASSWORD);
     }
     
     /**

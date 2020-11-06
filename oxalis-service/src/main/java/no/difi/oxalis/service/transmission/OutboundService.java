@@ -160,13 +160,6 @@ public class OutboundService extends BaseService{
             e.printStackTrace();
         }
     }
-    
-    
-     public String sendDocument(DocumentDTO documentDTO, String userId, boolean isResendDocument) throws IOException,
-            ClassNotFoundException, Exception {
-        
-         return send(documentDTO, userId, isResendDocument, false, true);
-     }
      
     public String send(final DocumentDTO documentDTO, final String userId, final boolean isResendDocument, 
             final boolean enhanced, boolean async) throws IOException, ClassNotFoundException, Exception {
@@ -383,6 +376,10 @@ public class OutboundService extends BaseService{
                 return EHFConstants.EHF_THREE_DOT_ZERO_ORDER.getValue();
             } else if (content.contains("OrderResponse>")) {
                 return EHFConstants.EHF_THREE_DOT_ZERO_ORDER_RESPONSE.getValue();
+            } else if (content.contains("ReceptionAcknowledgement>")) {
+                return EHFConstants.RECEIPT_ACKNOWLEDGEMENT.getValue();
+            } else if (content.contains("HandlingException>")) {
+                return EHFConstants.HANDLING_EXCEPTION.getValue();
             }
 
             return EHFConstants.EHF_THREE_DOT_ZERO_INVOICE.getValue();
@@ -1104,7 +1101,13 @@ public class OutboundService extends BaseService{
             DocumentDTO documentDTO = new DocumentDTO();
             documentDTO.setFileData(IOUtils.toByteArray(is));
             documentDTO.setLicenseId("PREPAID");
-            sendDocument(documentDTO, DS_NAME, true);
+            documentDTO.setEHFDocument(false);
+            
+            if (message.getFileName() != null && message.getFileName().endsWith("true.xml")) {
+                send(documentDTO, DS_NAME, true, true, false);
+            } else {
+                send(documentDTO, DS_NAME, true, false, true);
+            }
         } catch (Exception ex) {
 
             LOGGER.error("Unable to send the followup message", ex);
