@@ -105,7 +105,10 @@ public enum EHFConstants {
     EHF_THREE_DOT_ZERO_CUSTOMIZATION_ID("urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"),
     EHF_THREE_DOT_ZERO_PROFILE_ID("urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"),
     EHFV3_SCHEME_ID("0192"),
-    VAT("VAT");
+    VAT("VAT"),
+    
+    RECEIPT_ACKNOWLEDGEMENT("urn:iso:std:iso:20022:tech:xsd:pain.001.001.03::Document##urn:fdc:bits.no:2017:iso20022:1.5::03#urn:fdc:bits.no:2017:profile:01:1.0"),
+    HANDLING_EXCEPTION("urn:iso:std:iso:20022:tech:xsd:pain.001.001.03::Document##urn:fdc:bits.no:2017:iso20022:1.5::03#urn:fdc:bits.no:2017:profile:01:1.0");
     
     private String value;
 
