@@ -438,5 +438,5 @@ public class InvoiceDTO extends BaseDTO {
     public void setProjectReference(String projectReference) {
         this.projectReference = projectReference;
     }
-    
-}
+
+    }

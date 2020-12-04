@@ -138,6 +138,7 @@ import ehandel.no.ehf.creditnote.UBLVersionIDCommonBasic;
 import ehandel.no.ehf.creditnote.WebsiteURICommonBasic;
 import ehandel.no.ehf.creditnote.BuyerReferenceCommonBasic;
 import ehandel.no.ehf.creditnote.PaymentTermsType;
+import java.math.RoundingMode;
 import java.util.stream.Collectors;
 import javax.xml.bind.PropertyException;
 
@@ -666,40 +667,6 @@ public final class UblCreditNoteUtils {
                     new PartyLegalEntityCommonAggregate();
 
             boolean isPartyLegalEntity = false;
-
-            //set contact name
-            ContactPersonDTO contactPersonDTO = customerDTO.getContactPersonDTO();
-            if (contactPersonDTO != null) {
-
-                ContactType contactType = new ContactType();
-                NameCommonBasic nameCommonBasic = new NameCommonBasic();
-                IDCommonBasic idCommonBasic = new IDCommonBasic();
-                TelephoneCommonBasic telephone = new TelephoneCommonBasic();
-                TelefaxCommonBasic teleFax = new TelefaxCommonBasic();
-                ElectronicMailCommonBasic email = new ElectronicMailCommonBasic();
-
-                if (!StringUtils.isEmpty(contactPersonDTO.getId())) {
-                    idCommonBasic.setValue(contactPersonDTO.getName());
-                    contactType.setID(idCommonBasic);
-                }
-                if (!StringUtils.isEmpty(contactPersonDTO.getName())) {
-                    nameCommonBasic.setValue(contactPersonDTO.getName());
-                    contactType.setName(nameCommonBasic);
-                }
-                if (!StringUtils.isEmpty(contactPersonDTO.getTelephone())) {
-                    telephone.setValue(contactPersonDTO.getTelephone());
-                    contactType.setTelephone(telephone);
-                }
-                if (!StringUtils.isEmpty(contactPersonDTO.getTeleFax())) {
-                    teleFax.setValue(contactPersonDTO.getTeleFax());
-                    contactType.setTelefax(teleFax);
-                }
-                if (!StringUtils.isEmpty(contactPersonDTO.getEmail())) {
-                    email.setValue(contactPersonDTO.getEmail());
-                    contactType.setElectronicMail(email);
-                }
-                customerPartyType.setBuyerContact(contactType);
-            }
             
             if (!StringUtils.isEmpty(customerDTO.getEndpointId())) {
                 EndpointIDCommonBasic endpointIDCB = new EndpointIDCommonBasic();
@@ -733,20 +700,32 @@ public final class UblCreditNoteUtils {
 
             ContactType contactType = new ContactType();
             boolean isContactAvailable = false;
+            
+            ContactPersonDTO contactPersonDTO = customerDTO.getContactPersonDTO();
 
-            if (!StringUtils.isEmpty(customerDTO.getTelePhone())) {
-                TelephoneCommonBasic telephoneCommonBasic = new TelephoneCommonBasic();
-                telephoneCommonBasic.setValue(customerDTO.getTelePhone());
-                contactType.setTelephone(telephoneCommonBasic);
-                isContactAvailable = true;
-            }           
+            if(contactPersonDTO != null) {
+                
+                if (!StringUtils.isEmpty(contactPersonDTO.getName())) {
+                    NameCommonBasic nameCommonBasic = new NameCommonBasic();
+                    nameCommonBasic.setValue(contactPersonDTO.getName());
+                    contactType.setName(nameCommonBasic);
+                    isContactAvailable = true;
+                }      
+                
+                if (!StringUtils.isEmpty(contactPersonDTO.getTelephone())) {
+                    TelephoneCommonBasic telephoneCommonBasic = new TelephoneCommonBasic();
+                    telephoneCommonBasic.setValue(contactPersonDTO.getTelephone());
+                    contactType.setTelephone(telephoneCommonBasic);
+                    isContactAvailable = true;
+                }           
 
-            if (!StringUtils.isEmpty(customerDTO.getEmail())) {
-                ElectronicMailCommonBasic electronicMailCommonBasic =
-                        new ElectronicMailCommonBasic();
-                electronicMailCommonBasic.setValue(customerDTO.getEmail());
-                contactType.setElectronicMail(electronicMailCommonBasic);
-                isContactAvailable = true;
+                if (!StringUtils.isEmpty(contactPersonDTO.getEmail())) {
+                    ElectronicMailCommonBasic electronicMailCommonBasic =
+                            new ElectronicMailCommonBasic();
+                    electronicMailCommonBasic.setValue(contactPersonDTO.getEmail());
+                    contactType.setElectronicMail(electronicMailCommonBasic);
+                    isContactAvailable = true;
+                }
             }
 
             if (isContactAvailable) {
@@ -1491,6 +1470,20 @@ public final class UblCreditNoteUtils {
                 taxTotalCommonAggregate.setTaxAmount(taxAmountCommonBasic);
             }
             creditNote.getTaxTotals().add(taxTotalCommonAggregate);
+            
+            CurrencyDTO baseCurrencyDTO  = invoiceDTO.getBaseCurrencyDTO();
+            
+            if (baseCurrencyDTO != null && !StringUtils.isEmpty(baseCurrencyDTO.getCurrencyCode())) {
+                if (!(currencyDTO.getCurrencyCode().equalsIgnoreCase(baseCurrencyDTO.getCurrencyCode()))) {
+                    
+                    taxTotalCommonAggregate = new TaxTotalType();
+                    taxAmountCommonBasic = new TaxAmountCommonBasic();
+                    taxAmountCommonBasic.setCurrencyID(baseCurrencyDTO.getCurrencyCode());
+                    taxAmountCommonBasic.setValue(ConversionUtils.asBigDecimal((invoiceDTO.getTaxAmount()/invoiceDTO.getInvoiceCurrencyBaseRate())*invoiceDTO.getExchangeRate()).setScale(2, RoundingMode.CEILING));
+                    taxTotalCommonAggregate.setTaxAmount(taxAmountCommonBasic);
+                    creditNote.getTaxTotals().add(taxTotalCommonAggregate);
+                }
+            }
         }
     }
 
@@ -1560,6 +1553,14 @@ public final class UblCreditNoteUtils {
 
                 LocationType locationType = new LocationType();
                 if (isAddressAvailable) {
+                    IDCommonBasic locationId = new IDCommonBasic();
+                    
+                    if(deliveryDTO.getLocationId() != null) {
+                        locationId.setValue(deliveryDTO.getLocationId());
+                        locationId.setSchemeID(deliveryDTO.getLocationSchemeId());
+                        locationType.setID(locationId);
+                    }
+
                     locationType.setAddress(deliveryAddress);
                     deliveryCommonAggregate.setDeliveryLocation(locationType);
                 }
@@ -1628,6 +1629,15 @@ public final class UblCreditNoteUtils {
 
                 LocationType locationType = new LocationType();
                 if (isAddressAvailable) {
+                    IDCommonBasic locationId = new IDCommonBasic();
+                    
+                    if(deliveryDTO.getLocationId() != null) {
+                        
+                        locationId.setValue(deliveryDTO.getLocationId());
+                        locationId.setSchemeID(deliveryDTO.getLocationSchemeId());
+                        locationType.setID(locationId);
+                    }
+
                     locationType.setAddress(deliveryAddress);
                     deliveryCommonAggregate.setDeliveryLocation(locationType);
                 }
@@ -2096,33 +2106,6 @@ public final class UblCreditNoteUtils {
             CustomerDTO customerDTO = new CustomerDTO();
             AddressDTO addressDTO = null;
 
-            //set contact name
-            ContactType buyerContact = customerPartyType.getBuyerContact();
-            if (buyerContact != null) {
-                ContactPersonDTO contactPerson = new ContactPersonDTO();
-                if (buyerContact.getID() != null) {
-                    IDCommonBasic idCommonBasic = buyerContact.getID();
-                    contactPerson.setId(idCommonBasic.getValue());
-                }
-                if (buyerContact.getName() != null) {
-                    NameCommonBasic nameCommonBasic = buyerContact.getName();
-                    contactPerson.setName(nameCommonBasic.getValue());
-                }
-                if (buyerContact.getTelephone() != null) {
-                    TelephoneCommonBasic telephoneCommonBasic = buyerContact.getTelephone();
-                    contactPerson.setTelephone(telephoneCommonBasic.getValue());
-                }
-                if (buyerContact.getTelefax() != null) {
-                    TelefaxCommonBasic teleFaxCommonBasic = buyerContact.getTelefax();
-                    contactPerson.setTeleFax(teleFaxCommonBasic.getValue());
-                }
-                if (buyerContact.getElectronicMail() != null) {
-                    ElectronicMailCommonBasic email = buyerContact.getElectronicMail();
-                    contactPerson.setEmail(email.getValue());
-                }
-                customerDTO.setContactPersonDTO(contactPerson);
-            }
-
             PartyTypeCommonAggregate party = customerPartyType.getParty();
             if (party != null) {
 
@@ -2204,22 +2187,26 @@ public final class UblCreditNoteUtils {
 
             ContactType contactType = party.getContact();
             if (contactType != null) {
+                
+                ContactPersonDTO contactPersonDTO = new ContactPersonDTO();
+
+                NameCommonBasic nameCommonBasic = contactType.getName();
+                if (nameCommonBasic != null) {
+                    contactPersonDTO.setName(nameCommonBasic.getValue());
+                }
 
                 TelephoneCommonBasic telephoneCommonBasic = contactType.getTelephone();
                 if (telephoneCommonBasic != null) {
-                    customerDTO.setTelePhone(telephoneCommonBasic.getValue());
-                }
-
-                TelefaxCommonBasic telefaxCommonBasic = contactType.getTelefax();
-                if (telefaxCommonBasic != null) {
-                    customerDTO.setTeleFax(telefaxCommonBasic.getValue());
+                    contactPersonDTO.setTelephone(telephoneCommonBasic.getValue());
                 }
 
                 ElectronicMailCommonBasic electronicMailCommonBasic =
                         contactType.getElectronicMail();
                 if (electronicMailCommonBasic != null) {
-                    customerDTO.setEmail(electronicMailCommonBasic.getValue());
+                    contactPersonDTO.setEmail(electronicMailCommonBasic.getValue());
                 }
+                
+                customerDTO.setContactPersonDTO(contactPersonDTO);
             }
             invoiceDTO.setCustomerDTO(customerDTO);
         }
@@ -2762,7 +2749,12 @@ public final class UblCreditNoteUtils {
 
             locationType = deliveryCommonAggregate.getDeliveryLocation();
             if (locationType != null) {
-
+                
+                if(locationType.getID() != null) {
+                    
+                    deliveryDTO.setLocationId(locationType.getID().getValue());
+                    deliveryDTO.setLocationSchemeId(locationType.getID().getSchemeID()); 
+                }
                 deliveryAddress = locationType.getAddress();
                 addressDTO = new AddressDTO();
                 if (deliveryAddress != null) {
@@ -2839,6 +2831,12 @@ public final class UblCreditNoteUtils {
 
             locationType = deliveryCommonAggregate.getDeliveryLocation();
             if (locationType != null) {
+                
+                if(locationType.getID() != null) {
+                    
+                    deliveryDTO.setLocationId(locationType.getID().getValue());
+                    deliveryDTO.setLocationSchemeId(locationType.getID().getSchemeID()); 
+                }
 
                 deliveryAddress = locationType.getAddress();
                 addressDTO = new AddressDTO();

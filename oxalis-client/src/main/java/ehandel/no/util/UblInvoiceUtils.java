@@ -144,6 +144,7 @@ import ehandel.no.ehf.invoice.TelephoneCommonBasic;
 import ehandel.no.ehf.invoice.TransactionCurrencyTaxAmountCommonBasic;
 import ehandel.no.ehf.invoice.UBLVersionIDCommonBasic;
 import ehandel.no.ehf.invoice.WebsiteURICommonBasic;
+import java.math.RoundingMode;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -913,40 +914,6 @@ public final class UblInvoiceUtils {
 
             String country = "";
 
-            //set contact name
-            ContactPersonDTO contactPersonDTO = customerDTO.getContactPersonDTO();
-            if (contactPersonDTO != null) {
-
-                ContactType contactType = new ContactType();
-                NameCommonBasic nameCommonBasic = new NameCommonBasic();
-                idCommonBasic = new IDCommonBasic();
-                TelephoneCommonBasic telephone = new TelephoneCommonBasic();
-                TelefaxCommonBasic teleFax = new TelefaxCommonBasic();
-                ElectronicMailCommonBasic email = new ElectronicMailCommonBasic();
-
-                if (!StringUtils.isEmpty(contactPersonDTO.getId())) {
-                    idCommonBasic.setValue(contactPersonDTO.getName());
-                    contactType.setID(idCommonBasic);
-                }
-                if (!StringUtils.isEmpty(contactPersonDTO.getName())) {
-                    nameCommonBasic.setValue(contactPersonDTO.getName());
-                    contactType.setName(nameCommonBasic);
-                }
-                if (!StringUtils.isEmpty(contactPersonDTO.getTelephone())) {
-                    telephone.setValue(contactPersonDTO.getTelephone());
-                    contactType.setTelephone(telephone);
-                }
-                if (!StringUtils.isEmpty(contactPersonDTO.getTeleFax())) {
-                    teleFax.setValue(contactPersonDTO.getTeleFax());
-                    contactType.setTelefax(teleFax);
-                }
-                if (!StringUtils.isEmpty(contactPersonDTO.getEmail())) {
-                    email.setValue(contactPersonDTO.getEmail());
-                    contactType.setElectronicMail(email);
-                }
-                customerPartyType.setBuyerContact(contactType);
-            }
-
             AddressDTO addressDTO = customerDTO.getAddressDTO();
             if (addressDTO != null && !StringUtils.isEmpty(addressDTO.getCountryCode())) {
                 country = addressDTO.getCountryCode().toUpperCase();
@@ -979,20 +946,32 @@ public final class UblInvoiceUtils {
 
             ContactType contactType = new ContactType();
             boolean isContactAvailable = false;
+            
+            ContactPersonDTO contactPersonDTO = customerDTO.getContactPersonDTO();           
+            if(contactPersonDTO != null) {
+                
+                if (!StringUtils.isEmpty(contactPersonDTO.getName())) {
+                    NameCommonBasic contactPersonName = new NameCommonBasic();
+                    contactPersonName.setValue(contactPersonDTO.getName());
+                    contactType.setName(contactPersonName);
+                    isContactAvailable = true;
+                }
+                
+                if (!StringUtils.isEmpty(contactPersonDTO.getTelephone())) {
+                    TelephoneCommonBasic telephoneCommonBasic = new TelephoneCommonBasic();
+                    telephoneCommonBasic.setValue(contactPersonDTO.getTelephone());
+                    contactType.setTelephone(telephoneCommonBasic);
+                    isContactAvailable = true;
+                }
 
-            if (!StringUtils.isEmpty(customerDTO.getTelePhone())) {
-                TelephoneCommonBasic telephoneCommonBasic = new TelephoneCommonBasic();
-                telephoneCommonBasic.setValue(customerDTO.getTelePhone());
-                contactType.setTelephone(telephoneCommonBasic);
-                isContactAvailable = true;
-            }
-
-            if (!StringUtils.isEmpty(customerDTO.getEmail())) {
-                ElectronicMailCommonBasic electronicMailCommonBasic =
-                        new ElectronicMailCommonBasic();
-                electronicMailCommonBasic.setValue(customerDTO.getEmail());
-                contactType.setElectronicMail(electronicMailCommonBasic);
-                isContactAvailable = true;
+                if (!StringUtils.isEmpty(contactPersonDTO.getEmail())) {
+                    ElectronicMailCommonBasic electronicMailCommonBasic =
+                            new ElectronicMailCommonBasic();
+                    electronicMailCommonBasic.setValue(contactPersonDTO.getEmail());
+                    contactType.setElectronicMail(electronicMailCommonBasic);
+                    isContactAvailable = true;
+                }
+                
             }
 
             if (isContactAvailable) {
@@ -1337,6 +1316,14 @@ public final class UblInvoiceUtils {
 
                 LocationType locationType = new LocationType();
                 if (isAddressAvailable) {
+                    IDCommonBasic locationId = new IDCommonBasic();
+                    
+                    if(deliveryDTO.getLocationId() != null) {
+                        locationId.setValue(deliveryDTO.getLocationId());
+                        locationId.setSchemeID(deliveryDTO.getLocationSchemeId());
+                        locationType.setID(locationId);
+                    }
+                    
                     locationType.setAddress(deliveryAddress);
                     deliveryCommonAggregate.setDeliveryLocation(locationType);
                 }
@@ -1733,7 +1720,7 @@ public final class UblInvoiceUtils {
                 if (taxSummary.getTaxAmount() != null) {
                     taxAmountCommonBasic = new TaxAmountCommonBasic();
                     taxAmountCommonBasic.setValue(ConversionUtils.asBigDecimal(taxSummary.getTaxAmount()));
-                    taxAmountCommonBasic.setCurrencyID(baseCurrencyDTO.getCurrencyCode());
+                    taxAmountCommonBasic.setCurrencyID(currencyCode);
                     taxSubtotalCommonAggregate.setTaxAmount(taxAmountCommonBasic);
                 }
 
@@ -1792,6 +1779,20 @@ public final class UblInvoiceUtils {
                 taxTotalCommonAggregate.setTaxAmount(taxAmountCommonBasic);
             }
             invoice.getTaxTotals().add(taxTotalCommonAggregate);
+            
+            if (baseCurrencyDTO != null && !StringUtils.isEmpty(baseCurrencyDTO.getCurrencyCode())) {
+                if (!(currencyDTO.getCurrencyCode().equalsIgnoreCase(baseCurrencyDTO.getCurrencyCode()))) {
+                    
+                    taxTotalCommonAggregate = new TaxTotalType();
+                    taxAmountCommonBasic = new TaxAmountCommonBasic();
+                    taxAmountCommonBasic.setCurrencyID(baseCurrencyDTO.getCurrencyCode());
+                    taxAmountCommonBasic.setValue(ConversionUtils.asBigDecimal((invoiceDTO.getTaxAmount()/invoiceDTO.getInvoiceCurrencyBaseRate())*invoiceDTO.getExchangeRate()).setScale(2, RoundingMode.CEILING));
+                    taxTotalCommonAggregate.setTaxAmount(taxAmountCommonBasic);
+                    invoice.getTaxTotals().add(taxTotalCommonAggregate);
+                }
+            }
+                
+            
         }
     }
 
@@ -2525,32 +2526,6 @@ public final class UblInvoiceUtils {
             AddressDTO addressDTO = null;
 
             PartyTypeCommonAggregate party = customerPartyType.getParty();
-            //set contact name
-            ContactType buyerContact = customerPartyType.getBuyerContact();
-            if (buyerContact != null) {
-                ContactPersonDTO contactPerson = new ContactPersonDTO();
-                if (buyerContact.getID() != null) {
-                    IDCommonBasic idCommonBasic = buyerContact.getID();
-                    contactPerson.setId(idCommonBasic.getValue());
-                }
-                if (buyerContact.getName() != null) {
-                    NameCommonBasic nameCommonBasic = buyerContact.getName();
-                    contactPerson.setName(nameCommonBasic.getValue());
-                }
-                if (buyerContact.getTelephone() != null) {
-                    TelephoneCommonBasic telephoneCommonBasic = buyerContact.getTelephone();
-                    contactPerson.setTelephone(telephoneCommonBasic.getValue());
-                }
-                if (buyerContact.getTelefax() != null) {
-                    TelefaxCommonBasic teleFaxCommonBasic = buyerContact.getTelefax();
-                    contactPerson.setTeleFax(teleFaxCommonBasic.getValue());
-                }
-                if (buyerContact.getElectronicMail() != null) {
-                    ElectronicMailCommonBasic email = buyerContact.getElectronicMail();
-                    contactPerson.setEmail(email.getValue());
-                }
-                customerDTO.setContactPersonDTO(contactPerson);
-            }
 
             if (party != null) {
 
@@ -2640,28 +2615,28 @@ public final class UblInvoiceUtils {
 
             ContactType contactType = party.getContact();
             if (contactType != null) {
-
-                IDCommonBasic idCommonBasic = contactType.getID();
-                if (idCommonBasic != null) {
-                    customerDTO.setContactId(idCommonBasic.getValue());
+                
+                ContactPersonDTO contact = new ContactPersonDTO();
+                
+                NameCommonBasic nameCommonBasic = contactType.getName();
+                if (nameCommonBasic != null) {
+                    contact.setName(nameCommonBasic.getValue());
                 }
 
                 TelephoneCommonBasic telephoneCommonBasic = contactType.getTelephone();
                 if (telephoneCommonBasic != null) {
-                    customerDTO.setTelePhone(telephoneCommonBasic.getValue());
-                }
-
-                TelefaxCommonBasic telefaxCommonBasic = contactType.getTelefax();
-                if (telefaxCommonBasic != null) {
-                    customerDTO.setTeleFax(telefaxCommonBasic.getValue());
+                    contact.setTelephone(telephoneCommonBasic.getValue());
                 }
 
                 ElectronicMailCommonBasic electronicMailCommonBasic =
                         contactType.getElectronicMail();
                 if (electronicMailCommonBasic != null) {
-                    customerDTO.setEmail(electronicMailCommonBasic.getValue());
+                    contact.setEmail(electronicMailCommonBasic.getValue());
                 }
+                
+                customerDTO.setContactPersonDTO(contact);
             }
+            
             invoiceDTO.setCustomerDTO(customerDTO);
         }
     }
@@ -2822,6 +2797,12 @@ public final class UblInvoiceUtils {
 
             locationType = deliveryCommonAggregate.getDeliveryLocation();
             if (locationType != null) {
+                
+                if(locationType.getID() != null) {
+                    
+                    deliveryDTO.setLocationId(locationType.getID().getValue());
+                    deliveryDTO.setLocationSchemeId(locationType.getID().getSchemeID());  
+                }
 
                 deliveryAddress = locationType.getAddress();
                 addressDTO = new AddressDTO();

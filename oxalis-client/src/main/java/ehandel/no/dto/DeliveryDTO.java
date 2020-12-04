@@ -21,6 +21,8 @@ import java.util.Date;
  */
 public class DeliveryDTO extends BaseDTO {
 
+    private String locationId;
+    private String locationSchemeId;
     private Date deliveryDate;
     private AddressDTO deliveryAddressDTO;
 
@@ -39,4 +41,21 @@ public class DeliveryDTO extends BaseDTO {
     public void setDeliveryAddressDTO(AddressDTO deliveryAddressDTO) {
         this.deliveryAddressDTO = deliveryAddressDTO;
     }
+
+    public String getLocationId() {
+        return locationId;
+    }
+
+    public void setLocationId(String locationId) {
+        this.locationId = locationId;
+    }
+
+    public String getLocationSchemeId() {
+        return locationSchemeId;
+    }
+
+    public void setLocationSchemeId(String locationSchemeId) {
+        this.locationSchemeId = locationSchemeId;
+    }
+    
 }
