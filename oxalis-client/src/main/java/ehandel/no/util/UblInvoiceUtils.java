@@ -785,6 +785,9 @@ public final class UblInvoiceUtils {
     private static void mapEHFV3SupplierBankAccount(InvoiceDTO invoiceDTO, Invoice invoice) {
 
         SupplierDTO supplierDTO = invoiceDTO.getSupplierDTO();
+        
+        boolean isFinancialAccountTypeForBBAN = false;
+        boolean isFinancialAccountTypeForIBAN = false;
 
         if (supplierDTO != null) {
 
@@ -801,6 +804,7 @@ public final class UblInvoiceUtils {
                     IDCommonBasic idCommonBasic = new IDCommonBasic();
                     idCommonBasic.setValue(getBBAN(bankAccountDTO.getBankAccountNumber()));
                     financialAccountTypeForBBAN.setID(idCommonBasic);
+                    isFinancialAccountTypeForBBAN = true;
                 }
 
                 if (!StringUtils.isEmpty(bankAccountDTO.getBankAccountName())) {
@@ -815,24 +819,19 @@ public final class UblInvoiceUtils {
                     idCommonBasic.setValue(getIBAN(bankAccountDTO.getiBanNo()));
                     financialAccountTypeForIBAN.setID(idCommonBasic);
                     financialAccountTypeForIBAN.setName(nameCommonBasic);
+                    isFinancialAccountTypeForIBAN =true;
                 }
 
                 BranchType branchType = null;
-                if (!StringUtils.isEmpty(bankAccountDTO.getBankAccountId())) {
+                if (!StringUtils.isEmpty(bankAccountDTO.getBic())) {
                     branchType = new BranchType();
                     IDCommonBasic idCommonBasic = new IDCommonBasic();
-                    idCommonBasic.setValue(bankAccountDTO.getBankAccountId());
-                    branchType.setID(idCommonBasic);
-                } else if (!StringUtils.isEmpty(bankAccountDTO.getBankAccountNumber())) {
-                    branchType = new BranchType();
-                    IDCommonBasic idCommonBasic = new IDCommonBasic();
-                    idCommonBasic.setValue(getBBAN(bankAccountDTO.getBankAccountNumber()));
+                    idCommonBasic.setValue(bankAccountDTO.getBic());
                     branchType.setID(idCommonBasic);
                 }
 
                 if (branchType != null) {
 
-                    financialAccountTypeForBBAN.setFinancialInstitutionBranch(branchType);
                     if (!StringUtils.isEmpty(bankAccountDTO.getiBanNo())) {
                         financialAccountTypeForIBAN.setFinancialInstitutionBranch(branchType);
                     }
@@ -851,8 +850,11 @@ public final class UblInvoiceUtils {
                     paymentMeansCommonAggregateForIBAN.getPaymentIDs().add(paymentIDCommonBasic);
                 }
 
-                invoice.getPaymentMeans().add(paymentMeansCommonAggregateForBBAN);
-                if (!StringUtils.isEmpty(bankAccountDTO.getiBanNo())) {
+                if(isFinancialAccountTypeForBBAN) {
+                    invoice.getPaymentMeans().add(paymentMeansCommonAggregateForBBAN);
+                }
+                
+                if (!StringUtils.isEmpty(bankAccountDTO.getiBanNo()) && isFinancialAccountTypeForIBAN) {
                     paymentMeansCommonAggregateForIBAN.setPayeeFinancialAccount(financialAccountTypeForIBAN);
                     invoice.getPaymentMeans().add(paymentMeansCommonAggregateForIBAN);
                 }
@@ -1111,16 +1113,8 @@ public final class UblInvoiceUtils {
             PaymentMeansCodeCommonBasic paymentMeansCodeCommonBasic = null;
 
             BankAccountDTO bankAccountDTO = null;
-            AddressDTO bankAddressDTO = null;
-            AddressType bankAddress = null;
-
-            boolean isFinancialInsAvailable = false;
-            boolean isFinancialAddressAvailable = false;
 
             for (PaymentMeansCommonAggregate paymentMeansCommonAggregate : invoice.getPaymentMeans()) {
-
-                isFinancialInsAvailable = false;
-                isFinancialAddressAvailable = false;
 
                 if (paymentMeansCommonAggregate == null) {
                     paymentMeansCommonAggregate = new PaymentMeansCommonAggregate();
@@ -1139,108 +1133,27 @@ public final class UblInvoiceUtils {
                     IDCommonBasic idCommonBasic = new IDCommonBasic();
 
                     if (bankAccountDTO.getiBanNo() != null && !bankAccountDTO.getiBanNo().isEmpty()) {
-                        idCommonBasic.setSchemeID(EHFConstants.IBAN.getValue());
                         idCommonBasic.setValue(getIBAN(bankAccountDTO.getiBanNo()));
                     } else {
-                        idCommonBasic.setSchemeID(EHFConstants.BBAN.getValue());
                         idCommonBasic.setValue(getBBAN(bankAccountDTO.getBankAccountNumber()));
                     }
                     financialAccountType.setID(idCommonBasic);
-
-                    financialInstitutionCommonAggregate = new FinancialInstitutionCommonAggregate();
-
-                    if (!StringUtils.isEmpty(bankAccountDTO.getBankAccountId())) {
-                        idCommonBasic = new IDCommonBasic();
-                        idCommonBasic.setValue(bankAccountDTO.getBankAccountId());
-                        branchType = new BranchType();
-                        branchType.setID(idCommonBasic);
-                        isFinancialInsAvailable = true;
+                    
+                    if(bankAccountDTO.getBankAccountName() != null) {
+                        NameCommonBasic commonBasic = new NameCommonBasic();
+                        commonBasic.setValue(bankAccountDTO.getBankAccountName());
+                        financialAccountType.setName(commonBasic);
                     }
+
 
                     if (!StringUtils.isEmpty(bankAccountDTO.getBic())) {
                         idCommonBasic = new IDCommonBasic();
                         idCommonBasic.setValue(bankAccountDTO.getBic());
-                        idCommonBasic.setSchemeID(EHFConstants.BIC.getValue());
-                        financialInstitutionCommonAggregate.setID(idCommonBasic);
-                        isFinancialInsAvailable = true;
+                        branchType = new BranchType();
+                        branchType.setID(idCommonBasic);
                     }
 
-                    if (!StringUtils.isEmpty(bankAccountDTO.getBankName())) {
-                        NameCommonBasic nameCommonBasic = new NameCommonBasic();
-                        nameCommonBasic.setValue(bankAccountDTO.getBankName());
-                        financialInstitutionCommonAggregate.setName(nameCommonBasic);
-                        isFinancialInsAvailable = true;
-                    }
-
-                    bankAddressDTO = bankAccountDTO.getBankAddressDTO();
-
-                    if (bankAddressDTO != null) {
-
-                        bankAddress = new AddressType();
-
-                        if (!StringUtils.isEmpty(bankAddressDTO.getBuildingNumber())) {
-                            BuildingNumberCommonBasic buildingNumberCommonBasic =
-                                    new BuildingNumberCommonBasic();
-                            buildingNumberCommonBasic.setValue(bankAddressDTO.getBuildingNumber());
-                            bankAddress.setBuildingNumber(buildingNumberCommonBasic);
-                            isFinancialAddressAvailable = true;
-                        }
-
-                        if (!StringUtils.isEmpty(bankAddressDTO.getStreetName())) {
-                            StreetNameCommonBasic streetNameCommonBasic =
-                                    new StreetNameCommonBasic();
-                            streetNameCommonBasic.setValue(bankAddressDTO.getStreetName());
-                            bankAddress.setStreetName(streetNameCommonBasic);
-                            isFinancialAddressAvailable = true;
-                        }
-                        
-                        if (!StringUtils.isEmpty(bankAddressDTO.getAdditionalStreetName())) {
-                            AdditionalStreetNameCommonBasic additionalStreetNameCommonBasic = new AdditionalStreetNameCommonBasic();
-                            additionalStreetNameCommonBasic.setValue(bankAddressDTO.getAdditionalStreetName());
-                            bankAddress.setAdditionalStreetName(additionalStreetNameCommonBasic);
-                            isFinancialAddressAvailable = true;
-                        }
-
-                        if (!StringUtils.isEmpty(bankAddressDTO.getPostalBox())) {
-                            PostboxCommonBasic postboxCommonBasic = new PostboxCommonBasic();
-                            postboxCommonBasic.setValue(bankAddressDTO.getPostalBox());
-                            bankAddress.setPostbox(postboxCommonBasic);
-                            isFinancialAddressAvailable = true;
-                        }
-
-                        if (!StringUtils.isEmpty(bankAddressDTO.getPostalZone())) {
-                            PostalZoneCommonBasic postalZoneCommonBasic =
-                                    new PostalZoneCommonBasic();
-                            postalZoneCommonBasic.setValue(bankAddressDTO.getPostalZone());
-                            bankAddress.setPostalZone(postalZoneCommonBasic);
-                            isFinancialAddressAvailable = true;
-                        }
-
-                        if (!StringUtils.isEmpty(bankAddressDTO.getCityName())) {
-                            CityNameCommonBasic cityNameCommonBasic = new CityNameCommonBasic();
-                            cityNameCommonBasic.setValue(bankAddressDTO.getCityName());
-                            bankAddress.setCityName(cityNameCommonBasic);
-                            isFinancialAddressAvailable = true;
-                        }
-
-                        if (!StringUtils.isEmpty(bankAddressDTO.getCountryCode())) {
-
-                            IdentificationCodeCommonBasic identificationCodeCommonBasic =
-                                    new IdentificationCodeCommonBasic();
-                            identificationCodeCommonBasic.setValue(bankAddressDTO.getCountryCode().toUpperCase());
-                            CountryType countryType = new CountryType();
-                            countryType.setIdentificationCode(identificationCodeCommonBasic);
-                            bankAddress.setCountry(countryType);
-                            isFinancialAddressAvailable = true;
-                        }
-                        if (isFinancialAddressAvailable) {
-                            financialInstitutionCommonAggregate.setAddress(bankAddress);
-                            isFinancialInsAvailable = true;
-                        }
-                    }
-
-                    if (isFinancialInsAvailable && branchType != null) {
-                        branchType.setFinancialInstitution(financialInstitutionCommonAggregate);
+                    if (branchType != null) {
                         financialAccountType.setFinancialInstitutionBranch(branchType);
                     }
 
@@ -2421,14 +2334,15 @@ public final class UblInvoiceUtils {
 
                 financialAccountType = paymentMeansCommonAggregate.getPayeeFinancialAccount();
                 if (financialAccountType != null) {
+                    
+                    branchType =  financialAccountType.getFinancialInstitutionBranch();
 
                     idCommonBasic = financialAccountType.getID();
-                    if (idCommonBasic != null && idCommonBasic.getValue() != null
-                            && idCommonBasic.getSchemeID() != null) {
+                    if (idCommonBasic != null && idCommonBasic.getValue() != null) {
 
-                        if (EHFConstants.IBAN.getValue().equals(idCommonBasic.getSchemeID())) {
+                        if (branchType != null) {
                             bankAccountDTO.setiBanNo(idCommonBasic.getValue());
-                        } else if (EHFConstants.BBAN.getValue().equals(idCommonBasic.getSchemeID())) {
+                        } else {
                             bankAccountDTO.setBankAccountNumber(idCommonBasic.getValue());
                         }
                     }
@@ -2438,67 +2352,11 @@ public final class UblInvoiceUtils {
                         bankAccountDTO.setBankAccountName(nameCommonBasic.getValue());
                     }
 
-                    branchType = financialAccountType.getFinancialInstitutionBranch();
                     if (branchType != null) {
 
                         idCommonBasic = branchType.getID();
                         if (idCommonBasic != null && idCommonBasic.getValue() != null) {
-                            bankAccountDTO.setBankAccountId(idCommonBasic.getValue());
-                        }
-
-                        financialInstitutionCommonAggregate = branchType.getFinancialInstitution();
-                        if (financialInstitutionCommonAggregate != null) {
-
-                            idCommonBasic = financialInstitutionCommonAggregate.getID();
-                            if (idCommonBasic != null) {
-                                bankAccountDTO.setBic(idCommonBasic.getValue());
-                            }
-
-                            nameCommonBasic = financialInstitutionCommonAggregate.getName();
-                            if (nameCommonBasic != null) {
-                                bankAccountDTO.setBankName(nameCommonBasic.getValue());
-                            }
-
-                            bankAddress = financialInstitutionCommonAggregate.getAddress();
-                            if (bankAddress != null) {
-
-                                bankAddressDTO = new AddressDTO();
-
-                                buildingNumberCommonBasic = bankAddress.getBuildingNumber();
-                                if (buildingNumberCommonBasic != null) {
-                                    bankAddressDTO.setBuildingNumber(buildingNumberCommonBasic.getValue());
-                                }
-
-                                streetNameCommonBasic = bankAddress.getStreetName();
-                                if (streetNameCommonBasic != null) {
-                                    bankAddressDTO.setStreetName(streetNameCommonBasic.getValue());
-                                }
-
-                                postalZoneCommonBasic = bankAddress.getPostalZone();
-                                if (postalZoneCommonBasic != null) {
-                                    bankAddressDTO.setPostalZone(postalZoneCommonBasic.getValue());
-                                }
-
-                                postboxCommonBasic = bankAddress.getPostbox();
-                                if (postboxCommonBasic != null) {
-                                    bankAddressDTO.setPostalBox(postboxCommonBasic.getValue());
-                                }
-
-                                cityNameCommonBasic = bankAddress.getCityName();
-                                if (cityNameCommonBasic != null) {
-                                    bankAddressDTO.setCityName(cityNameCommonBasic.getValue());
-                                }
-
-                                countryType = bankAddress.getCountry();
-                                if (countryType != null) {
-                                    identificationCodeCommonBasic =
-                                            countryType.getIdentificationCode();
-                                    if (identificationCodeCommonBasic != null) {
-                                        bankAddressDTO.setCountryCode(identificationCodeCommonBasic.getValue());
-                                    }
-                                }
-                                bankAccountDTO.setBankAddressDTO(bankAddressDTO);
-                            }
+                            bankAccountDTO.setBic(idCommonBasic.getValue());
                         }
                     }
                 }
@@ -2679,81 +2537,34 @@ public final class UblInvoiceUtils {
                 financialAccountType = paymentMeansCommonAggregate.getPayerFinancialAccount();
                 if (financialAccountType != null) {
 
+                    branchType = financialAccountType.getFinancialInstitutionBranch();
+                    
                     bankAccountDTO = new BankAccountDTO();
 
                     idCommonBasic = financialAccountType.getID();
-                    if (idCommonBasic != null && idCommonBasic.getValue() != null
-                            && idCommonBasic.getSchemeID() != null) {
+                    if (idCommonBasic != null && idCommonBasic.getValue() != null) {
 
-                        if (EHFConstants.IBAN.getValue().equals(idCommonBasic.getSchemeID())) {
+                        if (branchType != null) {
                             bankAccountDTO.setiBanNo(idCommonBasic.getValue());
-                        } else if (EHFConstants.BBAN.getValue().equals(idCommonBasic.getSchemeID())) {
+                        } else {
                             bankAccountDTO.setBankAccountNumber(idCommonBasic.getValue());
                         }
                     }
+                    
+                    nameCommonBasic = financialAccountType.getName();
+                    
+                    if(nameCommonBasic != null) {
+                        bankAccountDTO.setBankAccountName(nameCommonBasic.getValue());
+                    }
 
-                    branchType = financialAccountType.getFinancialInstitutionBranch();
                     if (branchType != null) {
 
                         idCommonBasic = branchType.getID();
                         if (idCommonBasic != null && idCommonBasic.getValue() != null) {
-                            bankAccountDTO.setBankAccountId(idCommonBasic.getValue());
-                        }
-
-                        financialInstitutionCommonAggregate = branchType.getFinancialInstitution();
-                        if (financialInstitutionCommonAggregate != null) {
-
-                            idCommonBasic = financialInstitutionCommonAggregate.getID();
-                            if (idCommonBasic != null) {
-                                bankAccountDTO.setBic(idCommonBasic.getValue());
-                            }
-
-                            nameCommonBasic = financialInstitutionCommonAggregate.getName();
-                            if (nameCommonBasic != null) {
-                                bankAccountDTO.setBankName(nameCommonBasic.getValue());
-                            }
-
-                            bankAddress = financialInstitutionCommonAggregate.getAddress();
-                            if (bankAddress != null) {
-
-                                bankAddressDTO = new AddressDTO();
-
-                                buildingNumberCommonBasic = bankAddress.getBuildingNumber();
-                                if (buildingNumberCommonBasic != null) {
-                                    bankAddressDTO.setBuildingNumber(buildingNumberCommonBasic.getValue());
-                                }
-
-                                streetNameCommonBasic = bankAddress.getStreetName();
-                                if (streetNameCommonBasic != null) {
-                                    bankAddressDTO.setStreetName(streetNameCommonBasic.getValue());
-                                }
-
-                                postalZoneCommonBasic = bankAddress.getPostalZone();
-                                if (postalZoneCommonBasic != null) {
-                                    bankAddressDTO.setPostalZone(postalZoneCommonBasic.getValue());
-                                }
-
-                                postboxCommonBasic = bankAddress.getPostbox();
-                                if (postboxCommonBasic != null) {
-                                    bankAddressDTO.setPostalBox(postboxCommonBasic.getValue());
-                                }
-
-                                cityNameCommonBasic = bankAddress.getCityName();
-                                if (cityNameCommonBasic != null) {
-                                    bankAddressDTO.setCityName(cityNameCommonBasic.getValue());
-                                }
-
-                                countryType = bankAddress.getCountry();
-                                if (countryType != null) {
-                                    identificationCodeCommonBasic =
-                                            countryType.getIdentificationCode();
-                                    if (identificationCodeCommonBasic != null) {
-                                        bankAddressDTO.setCountryCode(identificationCodeCommonBasic.getValue());
-                                    }
-                                }
-                            }
+                            bankAccountDTO.setBic(idCommonBasic.getValue());
                         }
                     }
+
                 }
             }
 
