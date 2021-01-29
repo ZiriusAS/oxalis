@@ -1179,6 +1179,20 @@ public final class UblInvoiceUtils {
                 actualDeliveryDateCommonBasic.setValue(ConversionUtils.asXMLGregorianCalendar(deliveryDTO.getDeliveryDate()));
                 deliveryCommonAggregate.setActualDeliveryDate(actualDeliveryDateCommonBasic);
             }
+            
+            if(deliveryDTO.getPartyName() != null) {
+                
+                PartyTypeCommonAggregate partyTypeCommonAggregate = new PartyTypeCommonAggregate();
+
+                PartyNameCommonAggregate partyNameCommonAggregate = new PartyNameCommonAggregate();
+                NameCommonBasic nameCommonBasic = new NameCommonBasic();
+                nameCommonBasic.setValue(deliveryDTO.getPartyName());
+                partyNameCommonAggregate.setName(nameCommonBasic);
+                
+                partyTypeCommonAggregate.getPartyNames().add(partyNameCommonAggregate);
+                
+                deliveryCommonAggregate.setDeliveryParty(partyTypeCommonAggregate);
+            }
 
             AddressDTO addressDTO = deliveryDTO.getDeliveryAddressDTO();
             if (addressDTO != null) {
@@ -2604,6 +2618,16 @@ public final class UblInvoiceUtils {
             actualDeliveryDateCommonBasic = deliveryCommonAggregate.getActualDeliveryDate();
             if (actualDeliveryDateCommonBasic != null) {
                 deliveryDTO.setDeliveryDate(ConversionUtils.asDate(actualDeliveryDateCommonBasic.getValue()));
+            }
+            
+            if(deliveryCommonAggregate.getDeliveryParty() != null) {
+                
+                List<PartyNameCommonAggregate> partyNameCommonAggregates = deliveryCommonAggregate.getDeliveryParty().getPartyNames();
+                
+                if(partyNameCommonAggregates.size() > 0 ) {
+                    deliveryDTO.setPartyName(partyNameCommonAggregates.get(0).getName().getValue());
+                }
+                
             }
 
             locationType = deliveryCommonAggregate.getDeliveryLocation();

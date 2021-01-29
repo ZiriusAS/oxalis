@@ -25,6 +25,7 @@ public class DeliveryDTO extends BaseDTO {
     private String locationSchemeId;
     private Date deliveryDate;
     private AddressDTO deliveryAddressDTO;
+    private String partyName;
 
     public Date getDeliveryDate() {
         return deliveryDate;
@@ -56,6 +57,14 @@ public class DeliveryDTO extends BaseDTO {
 
     public void setLocationSchemeId(String locationSchemeId) {
         this.locationSchemeId = locationSchemeId;
+    }
+
+    public String getPartyName() {
+        return partyName;
+    }
+
+    public void setPartyName(String partyName) {
+        this.partyName = partyName;
     }
     
 }

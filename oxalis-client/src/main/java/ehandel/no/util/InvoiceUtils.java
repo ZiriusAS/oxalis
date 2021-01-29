@@ -2259,7 +2259,7 @@ public final class InvoiceUtils {
     /**
      * Method used to convert EHF invoice to ehandel.no.invoice.Invoice wrapper.
      */
-    public static InvoiceDTO convertToEHFInvoice(ehandel.no.invoice.Invoice invoice) {
+        public static InvoiceDTO convertToEHFInvoice(ehandel.no.invoice.Invoice invoice) {
 
         InvoiceDTO invoiceDTO = null;
         if (invoice != null) {
