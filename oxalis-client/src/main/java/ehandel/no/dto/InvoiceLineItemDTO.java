@@ -14,6 +14,7 @@ package ehandel.no.dto;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The Class InvoiceLineItemDTO.
@@ -56,6 +57,7 @@ public class InvoiceLineItemDTO extends BaseDTO {
     private List<BillingReferenceDTO> billingReferenceDTOs;
     private String InvoiceLineReference;
     private String buyersItemId;
+    private Map<String, String> propertiesOfItem;
 
     public String getId() {
         return id;
@@ -327,6 +329,14 @@ public class InvoiceLineItemDTO extends BaseDTO {
 
     public void setStandardIdentificationScheme(String standardIdentificationScheme) {
         this.standardIdentificationScheme = standardIdentificationScheme;
+    }
+
+    public Map<String, String> getPropertiesOfItem() {
+        return propertiesOfItem;
+    }
+
+    public void setPropertiesOfItem(Map<String, String> propertiesOfItem) {
+        this.propertiesOfItem = propertiesOfItem;
     }
     
 }

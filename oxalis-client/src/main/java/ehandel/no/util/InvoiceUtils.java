@@ -140,6 +140,8 @@ import ehandel.no.ehf.invoice.TelephoneCommonBasic;
 import ehandel.no.ehf.invoice.TransactionCurrencyTaxAmountCommonBasic;
 import ehandel.no.ehf.invoice.UBLVersionIDCommonBasic;
 import ehandel.no.ehf.invoice.WebsiteURICommonBasic;
+import ehandel.no.ehf.invoice.ItemPropertyType;
+import java.util.HashMap;
 import java.util.regex.Pattern;
 import javax.xml.bind.PropertyException;
 
@@ -1881,6 +1883,25 @@ public final class InvoiceUtils {
                         invoiceLine.getAllowanceCharges().add(allowanceChargeType);
                     }
                 }
+                
+                if(invoiceLineItemDTO.getPropertiesOfItem() != null) {
+                    
+                    for(java.util.Map.Entry<String,String> property : invoiceLineItemDTO.getPropertiesOfItem().entrySet()) {
+                        
+                        ehandel.no.invoice.ItemPropertyType itemPropertyType = new ehandel.no.invoice.ItemPropertyType();
+                        
+                        ehandel.no.invoice.NameCommonBasic nameCommonBasic1 = new ehandel.no.invoice.NameCommonBasic();
+                        nameCommonBasic1.setValue(property.getKey());
+                        
+                        ehandel.no.invoice.ValueCommonBasic valueCommonBasic = new ehandel.no.invoice.ValueCommonBasic();
+                        valueCommonBasic.setValue(property.getValue());
+                        
+                        itemPropertyType.setName(nameCommonBasic1);
+                        itemPropertyType.setValue(valueCommonBasic);
+                        
+                        item.getAdditionalItemProperties().add(itemPropertyType);
+                    }
+                }
 
                 mapDeliveryAddress(invoiceDTO, invoiceLine);
                 invoiceLine.setItem(item);
@@ -3430,6 +3451,21 @@ public final class InvoiceUtils {
                             invoiceLineItemDTO.getAllowanceCharges().add(allowanceChargeDTO);
                         }
                     }
+                }
+                
+                if(itemCommonAggregate != null && 
+                        itemCommonAggregate.getAdditionalItemProperties() != null) {
+                    
+                    java.util.Map<String,String> propertiesOfItem = new HashMap<>();
+                    for(ehandel.no.invoice.ItemPropertyType itemPropertyType : itemCommonAggregate.getAdditionalItemProperties()) {
+                        
+                        if(itemPropertyType.getName() != null && 
+                                itemPropertyType.getValue() != null) {
+                            propertiesOfItem.put(itemPropertyType.getName().getValue(), itemPropertyType.getValue().getValue());
+                        }
+                        
+                    }
+                   invoiceLineItemDTO.setPropertiesOfItem(propertiesOfItem);
                 }
 
                 mapDeliveryAddress(invoice, invoiceLineItemDTO);
@@ -5316,6 +5352,25 @@ public final class InvoiceUtils {
                         invoiceLine.getAllowanceCharges().add(allowanceChargeType);
                     }
                 }
+                
+                if(invoiceLineItemDTO.getPropertiesOfItem() != null) {
+                    
+                    for(java.util.Map.Entry<String,String> property : invoiceLineItemDTO.getPropertiesOfItem().entrySet()) {
+                        
+                        ItemPropertyType itemPropertyType = new ItemPropertyType();
+                        
+                        NameCommonBasic nameCommonBasic1 = new NameCommonBasic();
+                        nameCommonBasic1.setValue(property.getKey());
+                        
+                        ehandel.no.ehf.invoice.ValueCommonBasic valueCommonBasic = new ehandel.no.ehf.invoice.ValueCommonBasic();
+                        valueCommonBasic.setValue(property.getValue());
+                        
+                        itemPropertyType.setName(nameCommonBasic1);
+                        itemPropertyType.setValue(valueCommonBasic);
+                        
+                        item.getAdditionalItemProperties().add(itemPropertyType);
+                    }
+                }
 
                 mapEHFV2DeliveryAddress(invoiceDTO, invoiceLine);
                 invoiceLine.setItem(item);
@@ -7020,6 +7075,21 @@ public final class InvoiceUtils {
                             invoiceLineItemDTO.getAllowanceCharges().add(allowanceChargeDTO);
                         }
                     }
+                }
+                
+                if(itemCommonAggregate != null 
+                        && itemCommonAggregate.getAdditionalItemProperties() != null) {
+                    
+                    java.util.Map<String,String> propertiesOfItem = new HashMap<>();
+                    for(ItemPropertyType itemPropertyType : itemCommonAggregate.getAdditionalItemProperties()) {
+                        
+                        if(itemPropertyType.getName() != null && 
+                                itemPropertyType.getValue() != null) {
+                            propertiesOfItem.put(itemPropertyType.getName().getValue(), itemPropertyType.getValue().getValue());
+                        }
+                        
+                    }
+                   invoiceLineItemDTO.setPropertiesOfItem(propertiesOfItem);
                 }
 
                 mapEHFV2DeliveryAddress(invoice, invoiceLineItemDTO);

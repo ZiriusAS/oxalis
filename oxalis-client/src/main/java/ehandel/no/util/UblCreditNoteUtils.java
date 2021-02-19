@@ -1202,6 +1202,25 @@ public final class UblCreditNoteUtils {
                     }
                 }
 
+               if(creditNoteLineItemDTO.getPropertiesOfItem() != null) {
+                    
+                    for(java.util.Map.Entry<String,String> property : creditNoteLineItemDTO.getPropertiesOfItem().entrySet()) {
+                        
+                        ehandel.no.ehf.creditnote.ItemPropertyType itemPropertyType = new ehandel.no.ehf.creditnote.ItemPropertyType();
+                        
+                        NameCommonBasic nameCommonBasic1 = new NameCommonBasic();
+                        nameCommonBasic1.setValue(property.getKey());
+                        
+                        ehandel.no.ehf.creditnote.ValueCommonBasic valueCommonBasic = new ehandel.no.ehf.creditnote.ValueCommonBasic();
+                        valueCommonBasic.setValue(property.getValue());
+                        
+                        itemPropertyType.setName(nameCommonBasic1);
+                        itemPropertyType.setValue(valueCommonBasic);
+                        
+                        item.getAdditionalItemProperties().add(itemPropertyType);
+                    }
+                }
+               
                 //mapEHFV3DeliveryAddress(invoiceDTO, creditNoteLine);
                 creditNoteLine.setItem(item);
                 creditNote.getCreditNoteLines().add(creditNoteLine);
@@ -2441,7 +2460,22 @@ public final class UblCreditNoteUtils {
                         }
                     }
                 }
-
+                
+                if( itemCommonAggregate != null && 
+                        itemCommonAggregate.getAdditionalItemProperties() != null) {
+                    
+                    java.util.Map<String,String> propertiesOfItem = new java.util.HashMap<>();
+                    for(ehandel.no.ehf.creditnote.ItemPropertyType itemPropertyType : itemCommonAggregate.getAdditionalItemProperties()) {
+                        
+                        if(itemPropertyType.getName() != null && 
+                                itemPropertyType.getValue() != null) {
+                            propertiesOfItem.put(itemPropertyType.getName().getValue(), itemPropertyType.getValue().getValue());
+                        }
+                        
+                    }
+                   creditNoteLineItemDTO.setPropertiesOfItem(propertiesOfItem);
+                } 
+                
                 //mapEHFV3DeliveryAddress(creditNote, creditNoteLineItemDTO);
                 invoiceDTO.getInvoiceLineItems().add(creditNoteLineItemDTO);
             }
